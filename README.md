@@ -25,7 +25,7 @@ See `docs/` for the full thinking.
 | `docs/Problem_Space_PRD_Micro-Licensing.docx` | Problem-space PRD — who, what, evidence, personas. |
 | `docs/Solution_PRD_LicenseSaathi.md` | Solution PRD — scope, moat, architecture, build cut. |
 | `docs/Spec_LicenseSaathi.md` | Implementation spec — user stories, decisions, tests. |
-| `docs/tickets/` | 15 tracer-bullet tickets in dependency order. |
+| `docs/tickets/` | 16 tracer-bullet tickets in dependency order (incl. `00` design foundation). |
 
 ## Stack
 
@@ -33,4 +33,6 @@ Next.js (Vercel) · Supabase (Postgres + phone-OTP auth) · Mixpanel.
 
 ## Build order
 
-Start at `docs/tickets/01`. Frontier: **01 → 02 → {03, 05, 09} → 04 → 06 → 07 → {08, 10} → {11, 13} → 12 → 14 → 15**.
+Start at `docs/tickets/01`. Frontier: **01 → {00, 02} → {03, 05, 09} → 04 → 06 → 07 → {08, 10} → {11, 13} → 12 → 14 → 15**.
+
+Ticket `00` (design foundation) is a prefactor: it produces `PRODUCT.md` + `DESIGN.md` and blocks every user-facing ticket. Per-page design is not its own ticket — each UI ticket (05, 06, 07, 08, 09, 10, 11, 12, 15) carries a **design gate** (`/impeccable shape` against `DESIGN.md`) that must be finalized and approved before its build begins.
