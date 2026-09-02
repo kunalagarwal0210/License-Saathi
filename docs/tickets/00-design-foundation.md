@@ -4,7 +4,7 @@
 
 **Blocked by:** 01 (Scaffold + Vercel deploy skeleton) — the tokens/design system live in the real app.
 
-**Status:** in-progress — planning artifacts done; in-app implementation blocked by 01 (scaffold); pending Kunal's approval.
+**Status:** design approved (Kunal, 2026-09-02) — planning artifacts done; in-app token/component implementation carries to ticket 01 (scaffold).
 
 > **Path note:** `PRODUCT.md` and `DESIGN.md` live at the **project root** (not `docs/`) — the `impeccable` tooling (`context.mjs`, the detector, and every per-page `/impeccable shape` gate) resolves them at root. Putting them under `docs/` would break the tooling that the UI tickets depend on.
 
@@ -13,6 +13,6 @@
 - [ ] Design tokens implemented in the scaffolded app (colors, type, spacing, radii, motion) and referenced by `DESIGN.md`. **Blocked by 01** — tokens are fully specced in `DESIGN.md` as CSS custom properties, ready to drop into the scaffold.
 - [ ] Core component primitives shaped in-app (buttons/CTA, station cards, route rail, dense list rows, verified seal vs traveller-note, form controls). **Blocked by 01** — all nine primitives are specced in `DESIGN.md`; building them needs the app.
 - [x] Mobile-first: the system is defined for small screens first (primary audience is on phones).
-- [ ] Foundation reviewed and approved by Kunal before any UI ticket begins. **← awaiting review of `DESIGN.md`.**
+- [x] Foundation reviewed and approved by Kunal before any UI ticket begins. **Approved 2026-09-02** (design world "The Route" + tokens/primitives spec). UI tickets may now run their `/impeccable shape` gates against `DESIGN.md`; the in-app token/component build lands with the scaffold (01).
 
 **Note:** This ticket blocks every user-facing ticket (05, 06, 07, 08, 09, 10, 11, 12, 15). Per-page design is **not** a separate ticket — each UI ticket carries a design gate that runs `/impeccable shape <surface>` against this `DESIGN.md` before its build begins.
