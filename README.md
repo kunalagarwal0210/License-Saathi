@@ -31,7 +31,26 @@ See `docs/` for the full thinking.
 
 ## Stack
 
-Next.js (Vercel) · Supabase (Postgres + phone-OTP auth) · Mixpanel.
+Next.js (App Router, TypeScript) on Vercel · Tailwind CSS v4 · Supabase (Postgres + phone-OTP auth) · Mixpanel.
+
+## Local development
+
+```bash
+npm install
+cp .env.example .env.local   # fill in values (point Supabase at a NON-production project)
+npm run dev                  # http://localhost:3000
+```
+
+| Script | Does |
+|---|---|
+| `npm run dev` | Dev server |
+| `npm run build` / `npm start` | Production build / serve |
+| `npm run lint` · `npm run typecheck` | ESLint · `tsc --noEmit` |
+| `npm test` · `npm run test:watch` | Vitest (unit) |
+
+- **Design tokens** from `DESIGN.md` are implemented in `src/app/globals.css` as CSS custom properties, exposed to Tailwind via `@theme` (e.g. `bg-ground`, `text-route`, `text-verified`, `text-note`, `rounded-card`, `font-signage`). Fonts (Overpass + Hind) are wired in `src/app/layout.tsx`.
+- **Feature flags** use `isEnabled("FEATURE_X")` (`src/lib/flags.ts`) — server-side, "ship dark" (off unless the env var is exactly `"true"`). Values live on the host, never committed. See `docs/feature-flags-and-staging.md`.
+- **Env:** real values live on Vercel, scoped per environment; `.env.example` documents the required names only.
 
 ## Build order
 

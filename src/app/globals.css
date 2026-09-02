@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   LicenseSaathi design tokens — implements DESIGN.md ("The Route").
+   Raw palette vars live on :root (light) with dark overrides; @theme maps them
+   to Tailwind color/font/radius utilities (bg-ground, text-ink, text-route,
+   rounded-card, font-signage, …). One job per color — see DESIGN.md.
+   ========================================================================== */
+
+:root {
+  color-scheme: light dark;
+
+  /* Ground & surface — cool signboard, not cream */
+  --ground:        #F7F8FA;
+  --surface:       #FFFFFF;
+  --surface-sunk:  #EEF1F5;
+  --hairline:      #D7DCE3;
+
+  /* Ink */
+  --ink:           #16202C;
+  --ink-secondary: #52606D;
+  --ink-muted:     #8A97A5;
+
+  /* Route / primary — wayfinding indigo */
+  --route:         #1F4FD8;
+  --route-strong:  #163CAB;
+  --route-tint:    #E7EDFD;
+  --on-route:      #FFFFFF;
+
+  /* Verified / cleared — civic green */
+  --verified:      #147D5A;
+  --verified-tint: #E1F1EA;
+
+  /* Field-notes — warm ochre */
+  --note:          #B26A00;
+  --note-tint:     #FBF0DC;
+
+  /* Flagged / error — vermilion */
+  --flag:          #C0362C;
+  --flag-tint:     #FBE7E4;
+}
+
+/* Dark — role swaps only. Guarded so the [data-theme="light"] override wins. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground:#0F151D; --surface:#182230; --surface-sunk:#0B1017; --hairline:#2A3644;
+    --ink:#E6ECF3; --ink-secondary:#A9B6C4; --ink-muted:#6E7C8B;
+    --route:#6E93FF; --route-strong:#9DB6FF; --route-tint:#1B2A4A; --on-route:#0F151D;
+    --verified:#35B583; --verified-tint:#123528;
+    --note:#E0A23C; --note-tint:#3A2C11;
+    --flag:#F0766B; --flag-tint:#3A1714;
+  }
+}
+:root[data-theme="dark"] {
+  --ground:#0F151D; --surface:#182230; --surface-sunk:#0B1017; --hairline:#2A3644;
+  --ink:#E6ECF3; --ink-secondary:#A9B6C4; --ink-muted:#6E7C8B;
+  --route:#6E93FF; --route-strong:#9DB6FF; --route-tint:#1B2A4A; --on-route:#0F151D;
+  --verified:#35B583; --verified-tint:#123528;
+  --note:#E0A23C; --note-tint:#3A2C11;
+  --flag:#F0766B; --flag-tint:#3A1714;
+}
+
+@theme inline {
+  --color-ground:        var(--ground);
+  --color-surface:       var(--surface);
+  --color-surface-sunk:  var(--surface-sunk);
+  --color-hairline:      var(--hairline);
+  --color-ink:           var(--ink);
+  --color-ink-secondary: var(--ink-secondary);
+  --color-ink-muted:     var(--ink-muted);
+  --color-route:         var(--route);
+  --color-route-strong:  var(--route-strong);
+  --color-route-tint:    var(--route-tint);
+  --color-on-route:      var(--on-route);
+  --color-verified:      var(--verified);
+  --color-verified-tint: var(--verified-tint);
+  --color-note:          var(--note);
+  --color-note-tint:     var(--note-tint);
+  --color-flag:          var(--flag);
+  --color-flag-tint:     var(--flag-tint);
+
+  /* Type — Overpass (signage register) + Hind (body); wired in layout.tsx */
+  --font-signage: var(--font-overpass), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-body:    var(--font-hind), var(--font-overpass), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  /* Radii */
+  --radius-card:    12px;
+  --radius-control: 10px;
+  --radius-pill:    999px;
+}
+
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}

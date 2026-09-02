@@ -43,3 +43,6 @@ coverage/
 
 # Temp Office lock files
 ~$*
+
+# TypeScript build info
+*.tsbuildinfo
