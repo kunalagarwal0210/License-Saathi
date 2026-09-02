@@ -8,5 +8,9 @@
 
 - [ ] Next.js app created and runs locally
 - [ ] Project deploys to Vercel and the placeholder page is reachable at a public URL
-- [ ] Environment variable handling in place for later Supabase/Mixpanel keys
+- [ ] Repo connected to Vercel so every PR/branch auto-gets a **preview URL** (staging on real infra)
+- [ ] Environment variables scoped per environment (Production / Preview / Development) on Vercel — nothing committed; a `.env.example` documents required names (Supabase/Mixpanel keys) with no values
+- [ ] Feature-flag convention in place: a tiny `isEnabled('FEATURE_X')` helper reading `process.env`, plus the "ship dark" default-off pattern (see `docs/feature-flags-and-staging.md`)
 - [ ] Repo committed with a clear baseline
+
+See `docs/feature-flags-and-staging.md` for the env/flags/staging discipline every later ticket follows (flip → build → prove).
