@@ -26,6 +26,8 @@ See `docs/` for the full thinking.
 | `docs/Solution_PRD_LicenseSaathi.md` | Solution PRD — scope, moat, architecture, build cut. |
 | `docs/Spec_LicenseSaathi.md` | Implementation spec — user stories, decisions, tests. |
 | `docs/tickets/` | 16 tracer-bullet tickets in dependency order (incl. `00` design foundation). |
+| `docs/BUILD_WORKFLOW.md` | How we build: branching, worktrees, cold review, stop caps, gates. |
+| `docs/feature-flags-and-staging.md` · `docs/ai-workflow-orchestration.md` · `docs/git-worktrees.md` | Practice references behind the workflow. |
 
 ## Stack
 
