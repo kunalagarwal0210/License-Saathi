@@ -36,5 +36,10 @@ coverage/
 .claude/
 .scratch/
 
+# impeccable design-tooling scratch (config + surface briefs stay committable)
+.impeccable/build/
+.impeccable/mocks/
+.impeccable/review/
+
 # Temp Office lock files
 ~$*
