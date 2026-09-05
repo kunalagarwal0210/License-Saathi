@@ -5,7 +5,12 @@ import { searchParamsToAnswers } from "@/lib/questionnaire";
 import { resolveLicenses } from "@/lib/engine/resolveLicenses";
 import { verifiedRulesSource, verifiedLicensesById } from "@/lib/data/verified";
 import { buildRouteStations, summarizeRoute } from "@/lib/data/routeView";
+import { getPublicFieldNotes } from "@/lib/data/fieldNotes";
+import { isEnabled } from "@/lib/flags";
+import type { FieldNotePublicRow } from "@/lib/supabase/types";
 import { StationCard } from "@/components/StationCard";
+import { FieldNotes } from "@/components/FieldNotes";
+import { ShareRoute } from "@/components/ShareRoute";
 
 type ResultsPageProps = {
   params: Promise<{ category: string }>;
@@ -33,6 +38,14 @@ export default async function ResultsPage({ params, searchParams }: ResultsPageP
   const ordered = resolveLicenses(category, answers, verifiedRulesSource);
   const stations = buildRouteStations(ordered, verifiedLicensesById);
   const summary = summarizeRoute(stations);
+
+  // Ticket 08 — community field-notes tier, gated behind FEATURE_FIELD_NOTES.
+  // When the flag is off, no extra fetch happens and the page renders
+  // exactly as it did before this ticket.
+  const fieldNotesEnabled = isEnabled("FEATURE_FIELD_NOTES");
+  const fieldNotesByLicenseId = fieldNotesEnabled
+    ? await getPublicFieldNotes(stations.map((station) => station.license.id))
+    : new Map<string, FieldNotePublicRow[]>();
 
   const categoryLabel =
     CATEGORY_DEFINITIONS.find((definition) => definition.id === category)?.label ?? category;
@@ -91,9 +104,18 @@ export default async function ResultsPage({ params, searchParams }: ResultsPageP
                     {!isLast && <span className="w-0.5 flex-1 bg-hairline" />}
                   </div>
 
-                  {/* Station card. Bottom padding = the gap to the next stop. */}
+                  {/* Station card, plus — sibling BELOW it, never inside —
+                      that stop's community field notes (ticket 08). Bottom
+                      padding = the gap to the next stop. */}
                   <div className={isLast ? "flex-1" : "flex-1 pb-6"}>
-                    <StationCard license={station.license} />
+                    <div className="flex flex-col gap-3">
+                      <StationCard license={station.license} />
+                      {fieldNotesEnabled && (
+                        <FieldNotes
+                          notes={fieldNotesByLicenseId.get(station.license.id) ?? []}
+                        />
+                      )}
+                    </div>
                   </div>
                 </li>
               );
@@ -112,25 +134,29 @@ export default async function ResultsPage({ params, searchParams }: ResultsPageP
           </p>
         )}
 
-        {/* Change answers */}
-        <Link
-          href={`/questionnaire/${category}`}
-          className="inline-flex items-center gap-1.5 self-start font-signage text-sm font-semibold text-route underline decoration-route/30 underline-offset-2 hover:decoration-route"
-        >
-          <svg
-            viewBox="0 0 16 16"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-            className="h-4 w-4"
+        {/* Change answers + share — the route's two footer actions. */}
+        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+          <Link
+            href={`/questionnaire/${category}`}
+            className="inline-flex items-center gap-1.5 self-start font-signage text-sm font-semibold text-route underline decoration-route/30 underline-offset-2 hover:decoration-route"
           >
-            <path d="M10 12 6 8l4-4" />
-          </svg>
-          Change my answers
-        </Link>
+            <svg
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+              className="h-4 w-4"
+            >
+              <path d="M10 12 6 8l4-4" />
+            </svg>
+            Change my answers
+          </Link>
+
+          <ShareRoute />
+        </div>
       </div>
     </main>
   );
