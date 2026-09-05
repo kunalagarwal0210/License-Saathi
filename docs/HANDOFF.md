@@ -1,96 +1,97 @@
-# Handoff — LicenseSaathi: build in progress (00 design + 01 scaffold + 02 schema DONE)
+# Handoff — LicenseSaathi: build in progress (00–06 DONE; 07 in progress)
 
-**Written:** 2026-09-05 (updated). **Done so far:** ticket 00 (design foundation), 01 (scaffold), and 02 (Supabase schema) — all finalized, reviewed, and merged to `main`. Ticket 02's live database is created, migrated, and proven (round-trip test passes).
+**Written:** 2026-09-05 (updated through ticket 06). **Done so far:** tickets 00 (design foundation), 01 (scaffold), 02 (Supabase schema), **03 (rules engine)**, **04 (verified seed data)**, **05 (landing + category picker)**, **06 (branching questionnaire)** — all finalized, reviewed, and merged to `main`. Ticket **07 (result list / Route screen)** is the Must-ship payoff and is being built now. The public flow is demoable end to end (landing → category → questionnaire → results stub) on `main`.
 
 ## ⏰ Timing — read first
 - **Submission target: 6 September 2026 (tomorrow).** The Solution PRD's honest ~4-day cut is nearly spent. Prioritize the **Must-ship** path over completeness (see build cut below).
-- **Must-ship** (demo is dead without it): Landing → Questionnaire → **verified ordered licence list with citations + portal links** (screens 1–3) + minimal admin CRUD to enter seed rules (screen 9). That alone is a coherent, defensible product.
-- **Should-ship** (companion thesis / North Star): Login + returning dashboard + checklist mark-done (screens 4–6).
-- **Cut-first, in order** if time runs out: field-note capture (7) → reminder email (8) → then trim checklist. If cut, still *pitch* the loop in the PRD (it's the vision), just don't build it.
+- **Must-ship** (demo is dead without it): Landing → Questionnaire → **verified ordered licence list with citations + portal links** (screens 1–3) + minimal admin CRUD to enter seed rules (screen 9). **03→04→05→06 are DONE; 07 (the detailed result list) is in progress and is the last core piece of this spine.** 09 (admin) still to do.
+- **Should-ship** (companion thesis / North Star): Login + returning dashboard + checklist mark-done (screens 4–6 → tickets 10, 11, 12).
+- **Cut-first, in order** if time runs out: field-note capture (15) → reminder email (14) → then trim checklist. If cut, still *pitch* the loop in the PRD (it's the vision), just don't build it.
 
 ## Next session's job
-Build **03 (rules engine)** next — it is the core logic (deterministic `(category, answers) → ordered licence set`), non-UI, no design gate, TDD-first (Vitest is set up). It unblocks the questionnaire (06) and result list (07).
+Finish **07 (result list / Route screen)** if still in flight, then **09 (admin CRUD)** to complete the Must-ship spine. After that: **08 (field-notes display + share)**, then the Should-ship companion (**10 OTP → 11 dashboard → 12 checklist**), then analytics (**13**), then cut-first (**14, 15**).
 
-**Ticket 03 must define the questionnaire answer-keys** (turnover_band, seating, area, premises_type, alcohol) — these are the contract the questionnaire UI (06) presents. Do NOT copy the prototype's turnover bands from the UI spec; 03 defines the real ones from Ahmedabad/verified rules.
+## Cross-ticket contracts locked this session (DO NOT drift)
+- **Answer-key contract (from ticket 03)** — the questionnaire (06) presents these; the engine consumes them:
+  - `turnover_band`: `under_12L | 12L_to_20L | 20L_to_40L | over_40L` (boundaries on the FSSAI ₹12L and GST ₹20L/₹40L lines)
+  - `seating_band` (eatery): `none | under_50 | 50_plus`
+  - `area_band` (retail/salon): `small | large`
+  - `premises_type`: `on_premise | cloud_kitchen` (eatery) · `rented | owned` (retail/salon)
+  - `alcohol`: boolean (eatery)
+- **Engine ↔ DB reconciliation (ticket 04):** DB `rules.sequence` → engine `License.order`; `dependsOn: []` for every row (ordering via `order`, not a dependency graph — the engine's topo-sort degenerates to an order sort). DB `rules.condition` jsonb == engine `conditions` (array value = set-membership). No schema change was needed.
+- **Routing contracts:**
+  - Landing CTA → `/questionnaire/[category]` (`eatery|retail|salon`; category in the URL path).
+  - Questionnaire completion → `/results/[category]?<answers as query params>` (answers in the URL: survive refresh, shareable, no login). **Ticket 07 renders this route for real.**
+- **Fees (ticket 04 policy):** `govt_fee_inr` integer where clean (GST 0, FSSAI Basic 100); `null` + range-in-`description` where it varies. No schema change.
 
-**UI design is finalized** in `docs/UI_IMPLEMENTATION_SPEC.md` (from Figma Make + Lovable; consistent with DESIGN.md tokens + trust rules). The UI tickets (05, 06, 07, 09) build from it. `docs/FIGMA_DESIGN_BRIEF.md` is the token/contract companion. Two flags for later: the spec's questionnaire wording (Lovable) is good copy but the answer-keys come from 03; licence fee may be a range vs. our single-integer `govt_fee_inr` — reconcile in ticket 04 (possibly a schema tweak). Not yet received: the `LicenseSaathi App Design.zip` Figma export (screens); the spec's tokens/anatomy are enough to build from.
-
-**Design-approach update (committed this session):** the design *system* is already done (DESIGN.md + tokens in code). For the deadline, per-screen design is NOT run through a separate `/impeccable shape` mock gate; instead screens are built from the tokens and finalized **visually on the running app** (screenshots / preview), which Kunal approves. Kunal's Figma screens feed this.
+## Data trust status (ticket 04) — spot-check queue for Kunal
+Verified spine (official source fetched): **Shops & Establishment** (enagar.gujarat.gov.in), **GST** (gstcouncil.gov.in), **FSSAI Basic + State** (foscos.fssai.gov.in). **Flagged (out of the verified spine, honestly labelled):** Fire NOC, Eating House / Trade / Health licences, Professional Tax, and the Gujarat liquor-prohibition row. **Root cause of most flags:** `ahmedabadcity.gov.in` (AMC) failed TLS verification from the build agent's sandbox — likely fine from a normal browser. **`docs/verified-data-review.md`** is the spot-check sheet; top priority is confirming the AMC / Fire-NOC rows (and the 50-seat Fire-NOC threshold used in 06 is one of these flagged values). Gujarat prohibition handled honestly: `alcohol:true` → a flagged row stating the real local truth (no standard venue liquor licence outside GIFT City), not a fabricated generic-India step.
 
 ## Repo & environment
 - **Working dir / git repo:** `C:\Users\Asus\Desktop\builders-bible-excercises\Class Excercises\Ease of doing business solution`
 - **Remote:** `https://github.com/kunalagarwal0210/License-Saathi.git`
-- **TRUNK: `main`.** Branch from `origin/main`, merge back to `main` **via PR after cold review** — **never push to `main` directly**. This matches `docs/BUILD_WORKFLOW.md` §3, `docs/git-worktrees.md`, and `docs/feature-flags-and-staging.md`. (Historical note: a `design-foundation` branch was used briefly and then abandoned once `main` was confirmed as the trunk — do not resurrect it.)
-- **`gh` is authenticated** as `kunalagarwal0210` (repo scope) — you can open PRs. Merge to `main` only via PR; let Kunal approve merges (he has been merging on request).
-- **Git identity:** Kunal / kunalagarwal0210@gmail.com. Commit trailers: `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`.
-- **Worktree-per-ticket flow (works well):** `git worktree add -b <ticket-branch> .claude/worktrees/<ticket-branch> origin/main` → enter it → `npm install` first → build → PR into `main`. Base worktrees off **origin/main**. Clean up the worktree+branch (local+remote) after merge. Before every push: `git diff main..HEAD --stat` — only this feature's files should appear.
+- **TRUNK: `main`.** Branch from `origin/main`, merge back to `main` **via PR after cold review** — **never push to `main` directly**. This matches `docs/BUILD_WORKFLOW.md` §3, `docs/git-worktrees.md`, and `docs/feature-flags-and-staging.md`.
+- **`gh` is authenticated** as `kunalagarwal0210` (repo scope) — you can open PRs. Merge to `main` only via PR; let Kunal approve merges (he authorizes on request).
+- **Git identity:** Kunal / kunalagarwal0210@gmail.com. Commit trailers: `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>` + `Claude-Session: <session URL>`.
+- **Worktree-per-ticket flow (works well):** `git worktree add -b <ticket-branch> .claude/worktrees/<ticket-branch> origin/main` (or the EnterWorktree tool) → `npm install` first → build → PR into `main`. Base off **origin/main**. Clean up worktree+branch (local+remote) after merge. Before every push: `git diff main..HEAD --stat` — only this feature's files should appear.
+  - **Windows note:** `ExitWorktree --remove` often can't delete the worktree directory (file lock); follow with `git worktree prune` + `rm -rf .claude/worktrees/<name>` + `git branch -D <branch>` from the main checkout.
 - Local-only, gitignored: `.claude/`, `.scratch/`, `.impeccable/build|mocks|review/`, `*.tsbuildinfo`.
-- **Stale worktree to clean up:** `.claude/worktrees/ticket-01-scaffold` (branch merged) is likely still on disk — remove it: `git worktree remove` + delete branch local/remote.
 
 ## Source of truth (read first — do NOT duplicate)
-- **`PRODUCT.md`** (project ROOT) — durable product truth (audience, verified-spine vs field-notes trust model, voice, scope). Written via `/impeccable init`.
-- **`DESIGN.md`** (project ROOT) — the committed visual world "The Route". **Both live at ROOT, not `docs/`** — the `impeccable` tooling resolves them there; every `/impeccable shape` gate reads them.
-- **`docs/UI_IMPLEMENTATION_SPEC.md`** — the finalized UI/frontend spec for tickets 05/06/07/09 (Figma + Lovable; matches DESIGN.md). **`docs/FIGMA_DESIGN_BRIEF.md`** — the token + per-screen-content contract that keeps design and code in sync.
-- `docs/BUILD_WORKFLOW.md` — the umbrella build/execution model (branching, worktrees, merge gates, stop caps). Ties together the three references below. **Still open:** §6 model/role lineup table is a `TBD` placeholder.
-- `docs/git-worktrees.md` — worktree rules and the empty-worktree "green tests lie" trap.
-- `docs/ai-workflow-orchestration.md` — orchestrator / workers / cold-reviewer pattern; two dials (model + reasoning) per role; stop caps.
-- `docs/feature-flags-and-staging.md` — env/flags/staging discipline (flip → build → prove). **RISK flagged there:** ticket 02 must ensure dev/preview use a **separate Supabase project** from production.
+- **`PRODUCT.md`** (project ROOT) — durable product truth (audience, verified-spine vs field-notes trust model, voice, scope).
+- **`DESIGN.md`** (project ROOT) — the committed visual world "The Route". **Both live at ROOT, not `docs/`.**
+- **`docs/UI_IMPLEMENTATION_SPEC.md`** — the finalized UI/frontend spec for tickets 05/06/07/09. **`docs/FIGMA_DESIGN_BRIEF.md`** — the token + per-screen-content contract.
+- **`docs/verified-data-review.md`** — ticket-04 spot-check sheet (verified vs flagged rows + sources).
+- `docs/BUILD_WORKFLOW.md`, `docs/git-worktrees.md`, `docs/ai-workflow-orchestration.md`, `docs/feature-flags-and-staging.md` — build/workflow references.
 - `docs/Solution_PRD_LicenseSaathi.md`, `docs/Problem_Space_PRD_Micro-Licensing.docx`, `docs/Spec_LicenseSaathi.md` — PRDs + spec.
-- `docs/tickets/00..15-*.md` — 16 tickets in dependency order (00 + 01 now done; each UI ticket carries a Design gate).
+- `docs/tickets/00..15-*.md` — 16 tickets in dependency order.
 - `README.md` — overview + local-dev instructions.
 
 ## Product in one line
 Micro-licensing guidance for first-time small-business owners in **Ahmedabad only** (café/eatery, retail/kirana, salon). Short questionnaire → **ordered** set of licences, each with plain description, docs, govt fee, timeline, and a deep link to the official portal — human-verified, source-cited, date-stamped. Companion: save-as-checklist (phone-OTP), returning dashboard, printable pack, reminders. Data is two tiers **never mixed**: **verified spine** vs. labelled **community field-notes**. Stack: Next.js (Vercel) · Supabase (Postgres + phone-OTP) · Mixpanel.
 
 ## Status — what's DONE
-- **Ticket 00 (design foundation) — DONE, approved (Kunal, 2026-09-02), merged (PR #1).**
-  - `PRODUCT.md` + `DESIGN.md` at root. Name recorded as **LicenseSaathi**; voice **friendly/encouraging**; **English MVP, built to add a 2nd language (Gujarati) without rework**.
-- **Ticket 01 (scaffold) — code DONE, verified, merged (PR #2).**
-  - **Next.js 16 (App Router, TS) + Tailwind v4.** `build`/`typecheck`/`lint`/`test` all pass; dev server serves `/` (200).
-  - DESIGN.md **tokens implemented** in `src/app/globals.css` via Tailwind `@theme` (`bg-ground`, `text-route`/`verified`/`note`, `rounded-card`, `font-signage`, light+dark). Fonts **Overpass + Hind** wired in `layout.tsx` (Hind = latin-only for now; Devanagari/Gujarati subset added with the language feature).
-  - **Feature flags:** `isEnabled('FEATURE_X')` server-side helper (`src/lib/flags.ts`), ship-dark default-off, typed to known `FEATURE_*`, **unit-tested**. **Vitest** harness added (TDD).
-  - `.env.example` documents env var NAMES only. Branded **placeholder** page only (real Landing = ticket 05).
-- **Ticket 02 (Supabase schema) — code DONE, reviewed, merged (PR #4); live DB proven.**
-  - `supabase/migrations/0001_initial_schema.sql` — 6 tables (`licenses`, `rules`, `users`, `saved_checklists`, `checklist_items`, `field_notes`), 4 enums, FKs/cascades, `updated_at` trigger, RLS on every table (deny-by-default).
-  - **Two-tier invariant enforced structurally:** `chk_verified_has_source` CHECK blocks a `verified` licence with no `source_url` + `last_verified_date`; `field_notes` is a separate table that cannot carry a verified stamp. Reporter PII is served only via the `field_notes_public` view (omits `reporter_contact`, `security_invoker=off`); the raw `field_notes` table has no anon SELECT. Anon field-note inserts are forced to `status='new'`.
-  - `src/lib/supabase/` — typed client (`client.ts`, `admin.ts` with a hard `import 'server-only'` guard), handwritten `Database` types (use `type`, NOT `interface` — supabase-js@2.115 generic resolution breaks with `interface`), env-guarded round-trip test. Lazy init (build needs no env).
-  - **Live DB:** a Supabase **dev** project is created, the migration is applied, and the round-trip test PASSES against it. (A separate production project is deferred until real deploy.)
-  - Deferred minors for later tickets: ticket 08 reads field-notes via `field_notes_public` (not `.insert().select()` on the base table); ticket 04 seeder must supply `source_url` + `last_verified_date` (or set `flagged`).
-- **Model lineup pinned (PR #5):** `BUILD_WORKFLOW.md` §6 + `ai-workflow-orchestration.md` §3 now name Opus 4.8 orchestrator / Sonnet workers (Opus for hard tickets) / Opus cold reviewer @ max. This is the method used from ticket 02 on (orchestrator + subagent-driven-development: fresh worker subagent per ticket, cold-review subagent before merge).
+- **Ticket 00 (design foundation) — DONE, approved, merged (PR #1).** `PRODUCT.md` + `DESIGN.md` at root. Name **LicenseSaathi**; voice friendly/encouraging; English MVP, built to add Gujarati without rework.
+- **Ticket 01 (scaffold) — DONE, merged (PR #2).** Next.js 16 (App Router, TS) + Tailwind v4. DESIGN.md tokens in `src/app/globals.css` via `@theme`. Overpass + Hind fonts. Feature flags (`src/lib/flags.ts`). Vitest harness.
+- **Ticket 02 (Supabase schema) — DONE, merged (PR #4); live dev DB proven.** `supabase/migrations/0001_initial_schema.sql` — 6 tables, 4 enums, RLS deny-by-default, two-tier invariant enforced structurally (`chk_verified_has_source`; `field_notes` separate table + `field_notes_public` view). Typed `src/lib/supabase/` (use `type`, NOT `interface`). Deferred: ticket 08 reads field-notes via `field_notes_public`.
+- **Ticket 03 (rules engine) — DONE, merged (PR #9, merge `68e6cae`).** `src/lib/engine/` — pure `resolveLicenses(category, answers, rulesSource) → OrderedLicense[]`: condition matching (equality / set-membership / wildcard) + Kahn's topological sort with stable `(order, id)` tie-break; throws on cycles; no DB/UI imports. 13 TDD tests against in-memory fixtures. Defined the **answer-key contract** (above).
+- **Ticket 04 (verified seed data) — DONE, merged (PR #10, merge `f20c4ab`).** `src/lib/data/verified.ts` — real Ahmedabad data (`VerifiedLicense` rows, one per category, + `verifiedRulesSource`). `scripts/seed-verified.ts` (idempotent Supabase seed; run with `npm run seed:verified` + dev env — not yet executed against live DB). `docs/verified-data-review.md` spot-check sheet. Persona tests pass the engine against real data. Verified vs flagged split + AMC TLS blocker (see Data trust status). `src/lib/supabase/types.ts` widened `RuleCondition` to allow array values (type-only).
+- **Ticket 05 (landing + category picker) — DONE, Kunal-approved on running screen, merged (PR #11, merge `77035dc`).** `src/app/page.tsx` (real landing per spec §9) + `src/components/CategoryPicker.tsx` / `CategoryCard.tsx` / `CategoryIcon.tsx` + `src/lib/categories.ts` (categories + `isCategory()` + `getQuestionnaireHref()`). Selected-state token pattern established (route border + `route-tint` bg + filled check). Stub route `/questionnaire/[category]` (06 replaced it).
+- **Ticket 06 (branching questionnaire) — DONE, Kunal-approved on running screen, merged (PR #12, merge `6a390a8`).** `src/lib/questionnaire.ts` (pure per-category question config + `showIf` branching + answer↔URL serialization) + `src/lib/questionnaire.test.ts` + `src/components/QuestionnaireFlow.tsx` + real `src/app/questionnaire/[category]/page.tsx`. One-question-at-a-time guided journey, dynamic progress, Back/Continue. Eatery branches (seating only if on_premise). On completion runs the engine on real data and routes to `/results/[category]?<answers>`. **Minimal results stub** at `src/app/results/[category]/page.tsx` (07 replaces it with station cards).
+
+## Method used this session (orchestrator + workers)
+- **Pro-subscription-friendly:** worker subagents run on **Sonnet** (not Opus) to fit Pro rate limits; the orchestrator (Opus 4.8) does the cold review itself rather than spawning an Opus-max reviewer. One fresh Sonnet worker subagent per ticket, TDD/build-first, `npm install` in the fresh worktree first.
+- **Verification before merge:** orchestrator independently re-runs `test`/`typecheck`/`lint`/`build`, checks `git diff --name-only main..HEAD` scope, and reads the key files before opening the PR.
+- **UI design gate = build-then-review on the running app:** worker builds from tokens + spec; orchestrator runs the dev server (`npm run dev -- -p <port>`), screenshots via the Chrome tools, and sends previews to Kunal with `SendUserFile`; Kunal approves the running screen, then merge. (No separate `/impeccable shape` mock gate for the deadline.)
+- **Testing corner (all UI tickets):** no React Testing Library in the repo, so interaction/render is not unit-tested; instead the pure logic (categories, questionnaire, engine) is extracted into modules and unit-tested. Adding RTL is an open follow-up if wanted.
 
 ## The design system in brief ("The Route")
-Chosen via the `impeccable` direction roll (deliberately OFF the government-paper cliché). **Sequenced civic wayfinding:** licensing as a numbered, signposted journey to "shop open, legal."
-- **Palette:** light-first, cool signboard ground, **one-job-per-color** code — indigo `--route` (primary/path), green `--verified` (spine/✓/done), amber `--note` (field-notes), red `--flag` (re-verify/error). Dark = role swaps.
-- **Type:** Overpass (signage register) + Hind (body, Indian-foundry, language-expansion path).
-- **Signature primitives (specced in DESIGN.md, built per-surface at each shape gate):** route rail + stop nodes, **station card** (a verified licence), **verified seal** (green ✓ "verified on <date>" + source link), **traveller-note** (amber "field notes, not law").
-- **Load-bearing invariant:** verified spine and field-notes are **never mixed** — different color, container, language. Design's #1 job on every surface that shows both.
+Deliberately OFF the government-paper cliché. **Sequenced civic wayfinding:** licensing as a numbered, signposted journey to "shop open, legal."
+- **Palette:** light-first, one-job-per-color — indigo `route` (path), green `verified` (spine/✓/date), amber `note` (field-notes), red `flag` (re-verify/error). Dark = role swaps.
+- **Type:** Overpass (signage) + Hind (body, language-expansion path).
+- **Signature primitives:** route rail + stop nodes, **station card**, **verified seal** (green ✓ "verified on <date>" + source), **traveller-note** (amber "field notes, not law").
+- **Load-bearing invariant:** verified spine and field-notes are **never mixed** — different color, container, language.
 
 ## Build frontier — where we are
 `01 → {00, 02} → {03, 05, 09} → 04 → 06 → 07 → {08, 10} → {11, 13} → 12 → 14 → 15`
-- **Done:** 00, 01, 02.
-- **Now buildable:** **03 (rules engine)**, **05 (landing)**, **09 (admin)**. For the demo, the **03→06→07** result path + **05 (landing)** is the Must-ship spine. 03 is non-UI (no design gate); 05/09 are UI (build from Figma screens + live tokens).
+- **Done:** 00, 01, 02, 03, 04, 05, 06.
+- **In progress:** **07 (result list / Route screen)** — the Must-ship payoff.
+- **Now buildable next:** **09 (admin CRUD)** (finishes Must-ship), **08 (field-notes display + share)**, **10 (OTP auth + save)**.
 
 ## Infra status — Kunal's accounts
-- **Supabase — LIVE for dev.** A dev project exists, the migration is applied, and the round-trip PASSES. Keys are in local `.env.local` (gitignored). Still TODO: a **separate production** Supabase project before any real public launch (then swap the Vercel Production keys).
-- **Vercel — LIVE.** Repo connected; Production branch = `main`; the 3 Supabase keys are set on **all** environments (dev project, for now). Deployed site: **https://license-saathi.vercel.app/** (HTTP 200, placeholder page). Every PR now gets its own preview URL. Rule: after changing any env var, **redeploy** (vars bake at build time).
-
-## Design-gate model (UPDATED this session for the deadline)
-- The design **system** is done (DESIGN.md + tokens in `globals.css`). That big decision is locked.
-- **Per-screen design is now build-then-review, not mock-first.** For the deadline we do NOT run a separate `/impeccable shape` mock gate per UI ticket. Instead: Kunal designs the screen in **Figma** against `docs/FIGMA_DESIGN_BRIEF.md` (which pins the exact tokens + per-screen content so there is no rework), the worker builds it from the live tokens, and Kunal approves the **running screen** (screenshot/preview). The old ticket text still says `/impeccable shape` — treat this handoff as the current rule.
-- Non-UI tickets (02, 03, 04, 13) have no design step. Ticket 14 (reminder email) has no hard gate.
-- **Decision recorded:** the 9 component primitives are built when their first consuming UI ticket needs them (composed from the live tokens), not speculatively.
+- **Supabase — LIVE for dev.** Dev project exists, migration applied, round-trip PASSES. Keys in local `.env.local` (gitignored). Still TODO: a **separate production** project before real launch. Ticket-04 seed script has NOT yet been run against the dev DB (the app currently reads verified data from the TS module `src/lib/data/verified.ts`, not the DB).
+- **Vercel — LIVE.** Repo connected; Production branch = `main`; 3 Supabase keys set on all environments (dev project). Deployed: **https://license-saathi.vercel.app/**. Every PR gets a preview URL. After changing any env var, **redeploy** (vars bake at build time).
 
 ## How to work (Kunal's stated preferences)
-- Engineering-manager posture: clarify goal, scope, flag risk early, give a recommendation at decision points (not an exhaustive list). Direct and concise; lead with outcome; name assumptions/cut corners.
-- **One surface at a time; each finalized and approved before the next.** No building a UI surface until its design is locked.
+- Engineering-manager posture: clarify goal, scope, flag risk early, give a recommendation at decision points. Direct and concise; lead with outcome; name assumptions/cut corners.
+- **One surface at a time; each finalized and approved before the next.**
 - Branch-based; worktree per ticket; PR into `main` after cold review; **never push to `main` directly**; let Kunal merge (or he authorizes).
-- He follows from another device — use `SendUserFile` to put deliverables (DESIGN.md, screenshots, preview) in front of him.
+- He follows from another device — use `SendUserFile` to put deliverables (screenshots/preview) in front of him.
 
 ## Suggested skills for the next agent (Skill tool)
-- **`superpowers:brainstorming`** — before any UI design/creative work.
-- **`impeccable`** — drives every per-page design gate (`/impeccable shape <surface>`). Run `node <skill-base>/scripts/context.mjs` once per session (cwd = project root, where PRODUCT.md/DESIGN.md live).
-- **`superpowers:test-driven-development`** — Vitest harness is set up; use it for the rules engine (ticket 03) especially.
-- **`superpowers:writing-plans`** / **`superpowers:executing-plans`** — for sequencing the remaining build under time pressure.
+- **`superpowers:brainstorming`** — before UI/creative work.
+- **`superpowers:test-driven-development`** — Vitest harness set up.
+- **`superpowers:writing-plans`** / **`superpowers:executing-plans`** — sequencing under time pressure.
 - **`artifact-design`** — if showing designs as artifacts/mockups.
 
 ## Notes
