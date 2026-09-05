@@ -9,7 +9,11 @@
 - **Cut-first, in order** if time runs out: field-note capture (7) → reminder email (8) → then trim checklist. If cut, still *pitch* the loop in the PRD (it's the vision), just don't build it.
 
 ## Next session's job
-Build **03 (rules engine)** next — it is the core logic (deterministic `(category, answers) → ordered licence set`), non-UI, no design gate, TDD-first (Vitest is set up). It unblocks the questionnaire (06) and result list (07). In parallel, Kunal is designing the screens in **Figma** (see `docs/FIGMA_DESIGN_BRIEF.md`); the UI tickets (05, 06, 07, 09) build from those finalized screens against the live tokens.
+Build **03 (rules engine)** next — it is the core logic (deterministic `(category, answers) → ordered licence set`), non-UI, no design gate, TDD-first (Vitest is set up). It unblocks the questionnaire (06) and result list (07).
+
+**Ticket 03 must define the questionnaire answer-keys** (turnover_band, seating, area, premises_type, alcohol) — these are the contract the questionnaire UI (06) presents. Do NOT copy the prototype's turnover bands from the UI spec; 03 defines the real ones from Ahmedabad/verified rules.
+
+**UI design is finalized** in `docs/UI_IMPLEMENTATION_SPEC.md` (from Figma Make + Lovable; consistent with DESIGN.md tokens + trust rules). The UI tickets (05, 06, 07, 09) build from it. `docs/FIGMA_DESIGN_BRIEF.md` is the token/contract companion. Two flags for later: the spec's questionnaire wording (Lovable) is good copy but the answer-keys come from 03; licence fee may be a range vs. our single-integer `govt_fee_inr` — reconcile in ticket 04 (possibly a schema tweak). Not yet received: the `LicenseSaathi App Design.zip` Figma export (screens); the spec's tokens/anatomy are enough to build from.
 
 **Design-approach update (committed this session):** the design *system* is already done (DESIGN.md + tokens in code). For the deadline, per-screen design is NOT run through a separate `/impeccable shape` mock gate; instead screens are built from the tokens and finalized **visually on the running app** (screenshots / preview), which Kunal approves. Kunal's Figma screens feed this.
 
@@ -26,6 +30,7 @@ Build **03 (rules engine)** next — it is the core logic (deterministic `(categ
 ## Source of truth (read first — do NOT duplicate)
 - **`PRODUCT.md`** (project ROOT) — durable product truth (audience, verified-spine vs field-notes trust model, voice, scope). Written via `/impeccable init`.
 - **`DESIGN.md`** (project ROOT) — the committed visual world "The Route". **Both live at ROOT, not `docs/`** — the `impeccable` tooling resolves them there; every `/impeccable shape` gate reads them.
+- **`docs/UI_IMPLEMENTATION_SPEC.md`** — the finalized UI/frontend spec for tickets 05/06/07/09 (Figma + Lovable; matches DESIGN.md). **`docs/FIGMA_DESIGN_BRIEF.md`** — the token + per-screen-content contract that keeps design and code in sync.
 - `docs/BUILD_WORKFLOW.md` — the umbrella build/execution model (branching, worktrees, merge gates, stop caps). Ties together the three references below. **Still open:** §6 model/role lineup table is a `TBD` placeholder.
 - `docs/git-worktrees.md` — worktree rules and the empty-worktree "green tests lie" trap.
 - `docs/ai-workflow-orchestration.md` — orchestrator / workers / cold-reviewer pattern; two dials (model + reasoning) per role; stop caps.
@@ -65,9 +70,9 @@ Chosen via the `impeccable` direction roll (deliberately OFF the government-pape
 - **Done:** 00, 01, 02.
 - **Now buildable:** **03 (rules engine)**, **05 (landing)**, **09 (admin)**. For the demo, the **03→06→07** result path + **05 (landing)** is the Must-ship spine. 03 is non-UI (no design gate); 05/09 are UI (build from Figma screens + live tokens).
 
-## OUTSTANDING — Kunal's actions (accounts/infra only he can do)
-- **Supabase — DONE for dev.** A dev Supabase project exists, the migration is applied, and the round-trip passes. Keys are in local `.env.local` (gitignored). Still TODO: a **separate production** Supabase project before any real deploy.
-- **Vercel — NOT yet confirmed live.** When set up: import `kunalagarwal0210/License-Saathi` at vercel.com/new; keep **Production Branch = `main`**; add the 3 Supabase env vars for **Development + Preview** (the dev project), Production later. Each PR then gets a preview URL. Until Vercel is up, UI review falls back to local `npm run dev` screenshots.
+## Infra status — Kunal's accounts
+- **Supabase — LIVE for dev.** A dev project exists, the migration is applied, and the round-trip PASSES. Keys are in local `.env.local` (gitignored). Still TODO: a **separate production** Supabase project before any real public launch (then swap the Vercel Production keys).
+- **Vercel — LIVE.** Repo connected; Production branch = `main`; the 3 Supabase keys are set on **all** environments (dev project, for now). Deployed site: **https://license-saathi.vercel.app/** (HTTP 200, placeholder page). Every PR now gets its own preview URL. Rule: after changing any env var, **redeploy** (vars bake at build time).
 
 ## Design-gate model (UPDATED this session for the deadline)
 - The design **system** is done (DESIGN.md + tokens in `globals.css`). That big decision is locked.
