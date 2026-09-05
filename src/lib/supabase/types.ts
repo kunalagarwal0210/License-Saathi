@@ -23,10 +23,16 @@ export type ChecklistItemStatus = "pending" | "done";
  * Answer-key predicate evaluated by the rules engine (ticket 03), e.g.
  * `{"turnover_band":"above_40L"}`, `{"seating":"gte_50"}`,
  * `{"premises_type":"cloud_kitchen"}`, `{"alcohol":true}`, or `{}` for
- * "always applies". Left as a loose JSON shape — the rules engine owns
- * interpreting individual keys.
+ * "always applies". A value may also be an array (set-membership — the
+ * condition matches if the answer is a member of the array), e.g.
+ * `{"turnover_band":["20L_to_40L","over_40L"]}` (ticket 04's verified
+ * data uses this for band ranges). Left as a loose JSON shape — the rules
+ * engine owns interpreting individual keys.
  */
-export type RuleCondition = Record<string, string | number | boolean>;
+export type RuleCondition = Record<
+  string,
+  string | number | boolean | (string | number | boolean)[]
+>;
 
 export type LicensesRow = {
   id: string;
