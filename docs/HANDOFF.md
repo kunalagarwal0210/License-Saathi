@@ -1,6 +1,6 @@
-# Handoff — LicenseSaathi: build in progress (design foundation + scaffold DONE)
+# Handoff — LicenseSaathi: build in progress (00 design + 01 scaffold + 02 schema DONE)
 
-**Written:** 2026-09-05. **Previous phase:** design foundation (ticket 00) + scaffold (ticket 01) — both finalized, approved, and merged.
+**Written:** 2026-09-05 (updated). **Done so far:** ticket 00 (design foundation), 01 (scaffold), and 02 (Supabase schema) — all finalized, reviewed, and merged to `main`. Ticket 02's live database is created, migrated, and proven (round-trip test passes).
 
 ## ⏰ Timing — read first
 - **Submission target: 6 September 2026 (tomorrow).** The Solution PRD's honest ~4-day cut is nearly spent. Prioritize the **Must-ship** path over completeness (see build cut below).
@@ -9,7 +9,9 @@
 - **Cut-first, in order** if time runs out: field-note capture (7) → reminder email (8) → then trim checklist. If cut, still *pitch* the loop in the PRD (it's the vision), just don't build it.
 
 ## Next session's job
-Continue the tracer-bullet build, honoring the **per-page design gate** (every UI ticket runs `/impeccable shape <surface>` against `DESIGN.md`, finalized + **approved by Kunal**, before its build). Next buildable ticket on the frontier is **02 (schema)**; **05 (landing)** is the highest-value UI surface for the demo and unblocks the Must-ship path.
+Build **03 (rules engine)** next — it is the core logic (deterministic `(category, answers) → ordered licence set`), non-UI, no design gate, TDD-first (Vitest is set up). It unblocks the questionnaire (06) and result list (07). In parallel, Kunal is designing the screens in **Figma** (see `docs/FIGMA_DESIGN_BRIEF.md`); the UI tickets (05, 06, 07, 09) build from those finalized screens against the live tokens.
+
+**Design-approach update (committed this session):** the design *system* is already done (DESIGN.md + tokens in code). For the deadline, per-screen design is NOT run through a separate `/impeccable shape` mock gate; instead screens are built from the tokens and finalized **visually on the running app** (screenshots / preview), which Kunal approves. Kunal's Figma screens feed this.
 
 ## Repo & environment
 - **Working dir / git repo:** `C:\Users\Asus\Desktop\builders-bible-excercises\Class Excercises\Ease of doing business solution`
@@ -43,6 +45,13 @@ Micro-licensing guidance for first-time small-business owners in **Ahmedabad onl
   - DESIGN.md **tokens implemented** in `src/app/globals.css` via Tailwind `@theme` (`bg-ground`, `text-route`/`verified`/`note`, `rounded-card`, `font-signage`, light+dark). Fonts **Overpass + Hind** wired in `layout.tsx` (Hind = latin-only for now; Devanagari/Gujarati subset added with the language feature).
   - **Feature flags:** `isEnabled('FEATURE_X')` server-side helper (`src/lib/flags.ts`), ship-dark default-off, typed to known `FEATURE_*`, **unit-tested**. **Vitest** harness added (TDD).
   - `.env.example` documents env var NAMES only. Branded **placeholder** page only (real Landing = ticket 05).
+- **Ticket 02 (Supabase schema) — code DONE, reviewed, merged (PR #4); live DB proven.**
+  - `supabase/migrations/0001_initial_schema.sql` — 6 tables (`licenses`, `rules`, `users`, `saved_checklists`, `checklist_items`, `field_notes`), 4 enums, FKs/cascades, `updated_at` trigger, RLS on every table (deny-by-default).
+  - **Two-tier invariant enforced structurally:** `chk_verified_has_source` CHECK blocks a `verified` licence with no `source_url` + `last_verified_date`; `field_notes` is a separate table that cannot carry a verified stamp. Reporter PII is served only via the `field_notes_public` view (omits `reporter_contact`, `security_invoker=off`); the raw `field_notes` table has no anon SELECT. Anon field-note inserts are forced to `status='new'`.
+  - `src/lib/supabase/` — typed client (`client.ts`, `admin.ts` with a hard `import 'server-only'` guard), handwritten `Database` types (use `type`, NOT `interface` — supabase-js@2.115 generic resolution breaks with `interface`), env-guarded round-trip test. Lazy init (build needs no env).
+  - **Live DB:** a Supabase **dev** project is created, the migration is applied, and the round-trip test PASSES against it. (A separate production project is deferred until real deploy.)
+  - Deferred minors for later tickets: ticket 08 reads field-notes via `field_notes_public` (not `.insert().select()` on the base table); ticket 04 seeder must supply `source_url` + `last_verified_date` (or set `flagged`).
+- **Model lineup pinned (PR #5):** `BUILD_WORKFLOW.md` §6 + `ai-workflow-orchestration.md` §3 now name Opus 4.8 orchestrator / Sonnet workers (Opus for hard tickets) / Opus cold reviewer @ max. This is the method used from ticket 02 on (orchestrator + subagent-driven-development: fresh worker subagent per ticket, cold-review subagent before merge).
 
 ## The design system in brief ("The Route")
 Chosen via the `impeccable` direction roll (deliberately OFF the government-paper cliché). **Sequenced civic wayfinding:** licensing as a numbered, signposted journey to "shop open, legal."
@@ -53,19 +62,17 @@ Chosen via the `impeccable` direction roll (deliberately OFF the government-pape
 
 ## Build frontier — where we are
 `01 → {00, 02} → {03, 05, 09} → 04 → 06 → 07 → {08, 10} → {11, 13} → 12 → 14 → 15`
-- **Done:** 01, 00.
-- **Now buildable:** **02 (schema)**, **03 (rules engine)**, **05 (landing)**, **09 (admin)**. For the demo, **05 (landing)** + the 02→03→06→07 result path is the Must-ship spine. 02/03 are non-UI (no design gate); 05/09 are UI (design gate first).
+- **Done:** 00, 01, 02.
+- **Now buildable:** **03 (rules engine)**, **05 (landing)**, **09 (admin)**. For the demo, the **03→06→07** result path + **05 (landing)** is the Must-ship spine. 03 is non-UI (no design gate); 05/09 are UI (build from Figma screens + live tokens).
 
-## OUTSTANDING — Vercel (Kunal's action, not yet confirmed done)
-Ticket 01's remaining boxes need Kunal's Vercel account and were **in progress at last session (not confirmed live)**:
-1. Import `kunalagarwal0210/License-Saathi` at vercel.com/new (auto-detects Next.js; wires **preview URLs** per PR).
-2. **Production Branch = `main`** (Vercel's default for a connected repo — leave it as `main`). Each PR against `main` gets its own preview URL for the design-gate review.
-3. Set env vars per environment (names in `.env.example`; **non-prod Supabase** for Preview/Dev). Placeholder needs none yet.
-> Next session: ask Kunal whether Vercel is live and get the preview URL — each UI ticket's design gate is meant to be reviewed on its **preview URL** (per feature-flags doc). If Vercel isn't up, UI review falls back to local `npm run dev` screenshots.
+## OUTSTANDING — Kunal's actions (accounts/infra only he can do)
+- **Supabase — DONE for dev.** A dev Supabase project exists, the migration is applied, and the round-trip passes. Keys are in local `.env.local` (gitignored). Still TODO: a **separate production** Supabase project before any real deploy.
+- **Vercel — NOT yet confirmed live.** When set up: import `kunalagarwal0210/License-Saathi` at vercel.com/new; keep **Production Branch = `main`**; add the 3 Supabase env vars for **Development + Preview** (the dev project), Production later. Each PR then gets a preview URL. Until Vercel is up, UI review falls back to local `npm run dev` screenshots.
 
-## Design-gate model (do NOT re-litigate — committed)
-- Each UI ticket (05, 06, 07, 08, 09, 10, 11, 12, 15) carries a top-of-ticket **Design gate**: `/impeccable shape <surface>` against `DESIGN.md`, finalized + **approved by Kunal**, before any build checkbox. Per-page design is NOT its own ticket.
-- Non-UI tickets (02, 03, 04, 13) have no gate. Ticket 14 (reminder email) left out of the hard gate for now.
+## Design-gate model (UPDATED this session for the deadline)
+- The design **system** is done (DESIGN.md + tokens in `globals.css`). That big decision is locked.
+- **Per-screen design is now build-then-review, not mock-first.** For the deadline we do NOT run a separate `/impeccable shape` mock gate per UI ticket. Instead: Kunal designs the screen in **Figma** against `docs/FIGMA_DESIGN_BRIEF.md` (which pins the exact tokens + per-screen content so there is no rework), the worker builds it from the live tokens, and Kunal approves the **running screen** (screenshot/preview). The old ticket text still says `/impeccable shape` — treat this handoff as the current rule.
+- Non-UI tickets (02, 03, 04, 13) have no design step. Ticket 14 (reminder email) has no hard gate.
 - **Decision recorded:** the 9 component primitives are built when their first consuming UI ticket needs them (composed from the live tokens), not speculatively.
 
 ## How to work (Kunal's stated preferences)
