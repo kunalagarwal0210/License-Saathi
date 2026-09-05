@@ -482,6 +482,16 @@ export const verifiedRules: VerifiedRule[] = [
  * shape (`resolveLicenses.ts` never imports Supabase or this file's richer
  * `VerifiedLicense`/`VerifiedRule` types — only this seam).
  */
+/**
+ * Engine-result-id → full `VerifiedLicense` lookup (ticket 07). The engine
+ * only ever returns the minimal `License` shape (id/name/dependsOn/order);
+ * the results/route screen needs every other column (fee, documents,
+ * status, sourceUrl, …), so it maps each returned id through this table.
+ */
+export const verifiedLicensesById: ReadonlyMap<string, VerifiedLicense> = new Map(
+  verifiedLicenses.map((license) => [license.id, license])
+);
+
 export const verifiedRulesSource: RulesSource = {
   licenses: verifiedLicenses.map(
     (license): License => ({
