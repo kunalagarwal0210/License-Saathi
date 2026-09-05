@@ -1,21 +1,26 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { isCategory, CATEGORY_DEFINITIONS } from "@/lib/categories";
 import { searchParamsToAnswers } from "@/lib/questionnaire";
 import { resolveLicenses } from "@/lib/engine/resolveLicenses";
-import { verifiedRulesSource } from "@/lib/data/verified";
+import { verifiedRulesSource, verifiedLicensesById } from "@/lib/data/verified";
+import { buildRouteStations, summarizeRoute } from "@/lib/data/routeView";
+import { StationCard } from "@/components/StationCard";
 
 type ResultsPageProps = {
   params: Promise<{ category: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-// MINIMAL results stub (ticket 06). Reads the answers ticket 06's
-// questionnaire carries in the URL (`/results/[category]?<answers>` — the
-// 06 -> 07 routing contract) and runs them through the real
-// `resolveLicenses` engine against the verified data source, rendering a
-// plain ordered list of licence names. Ticket 07 replaces this with the
-// real station-card / route-rail design — this stub only needs to be
-// minimal and correct.
+// Ticket 07 — Results / Route screen. The Must-ship payoff: the ordered set of
+// licences for this business, drawn as a vertical route rail of numbered stops,
+// each a station card with plain-language detail, documents, fee, timeline,
+// verified seal + source, and a deep link to the official portal.
+//
+// Reads the answers ticket 06 carries in the URL (`/results/[category]?<answers>`
+// — the 06 -> 07 routing contract; no login), runs them through the real
+// `resolveLicenses` engine against the verified data source, then maps each
+// ordered result to its full detail row for rendering.
 export default async function ResultsPage({ params, searchParams }: ResultsPageProps) {
   const { category } = await params;
   const query = await searchParams;
@@ -25,42 +30,130 @@ export default async function ResultsPage({ params, searchParams }: ResultsPageP
   }
 
   const answers = searchParamsToAnswers(query);
-  const licenses = resolveLicenses(category, answers, verifiedRulesSource);
+  const ordered = resolveLicenses(category, answers, verifiedRulesSource);
+  const stations = buildRouteStations(ordered, verifiedLicensesById);
+  const summary = summarizeRoute(stations);
+
   const categoryLabel =
     CATEGORY_DEFINITIONS.find((definition) => definition.id === category)?.label ?? category;
 
   return (
-    <main className="flex flex-1 flex-col items-center px-4 py-12">
-      <div className="flex w-full max-w-[560px] flex-col gap-6">
-        <div className="flex flex-col gap-1">
+    <main className="flex flex-1 flex-col items-center px-4 py-10 sm:py-12">
+      <div className="flex w-full max-w-[600px] flex-col gap-8">
+        {/* Header */}
+        <header className="flex flex-col gap-2">
           <span className="font-signage text-xs font-semibold uppercase tracking-[0.18em] text-route">
-            {categoryLabel} · Ahmedabad
+            Setting up
           </span>
-          <h1 className="font-signage text-2xl font-bold tracking-tight text-ink">
-            Your licence route
+          <h1 className="font-signage text-[26px] font-bold leading-tight tracking-tight text-ink">
+            {categoryLabel}, Ahmedabad
           </h1>
-          <p className="text-sm text-ink-secondary">
-            Minimal stub (ticket 06) — verified/flagged station-card styling
-            arrives in ticket 07.
+          <p className="font-signage text-sm font-medium tabular-nums text-ink-secondary">
+            <span className="text-ink">{summary.total}</span>{" "}
+            {summary.total === 1 ? "stop" : "stops"} on your route
+            {summary.flagged > 0 && (
+              <>
+                <Separator />
+                <span className="text-verified">{summary.verified} verified</span>
+                <Separator />
+                <span className="text-flag">{summary.flagged} to confirm</span>
+              </>
+            )}
           </p>
-        </div>
+        </header>
 
-        <ol className="flex flex-col gap-2">
-          {licenses.map((license, index) => (
-            <li
-              key={license.id}
-              className="flex items-center gap-3 rounded-card border border-hairline bg-surface px-4 py-3"
-            >
-              <span className="font-signage text-sm font-semibold tabular-nums text-ink-secondary">
-                {index + 1}
-              </span>
-              <span className="font-signage text-base font-semibold text-ink">
-                {license.name}
-              </span>
-            </li>
-          ))}
-        </ol>
+        {/* Route rail — vertical line threading numbered stop nodes, each with
+            its station card. The rail (line + numbered nodes) is the signature
+            visual and stays recognizable with all card text removed. */}
+        {stations.length === 0 ? (
+          <EmptyRoute />
+        ) : (
+          <ol className="flex flex-col">
+            {stations.map((station, index) => {
+              const isLast = index === stations.length - 1;
+              const isVerified = station.license.status === "verified";
+              return (
+                <li key={station.license.id} className="flex gap-4">
+                  {/* Rail column: numbered node + connector to the next stop */}
+                  <div
+                    aria-hidden="true"
+                    className="flex w-8 shrink-0 flex-col items-center"
+                  >
+                    <span
+                      className={`flex h-8 w-8 items-center justify-center rounded-full font-signage text-sm font-bold tabular-nums ${
+                        isVerified
+                          ? "bg-route text-on-route"
+                          : "border-2 border-flag bg-surface text-flag"
+                      }`}
+                    >
+                      {station.stopNumber}
+                    </span>
+                    {!isLast && <span className="w-0.5 flex-1 bg-hairline" />}
+                  </div>
+
+                  {/* Station card. Bottom padding = the gap to the next stop. */}
+                  <div className={isLast ? "flex-1" : "flex-1 pb-6"}>
+                    <StationCard license={station.license} />
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        )}
+
+        {/* Trust footnote — reinforces the two-tier model in plain words. */}
+        {summary.flagged > 0 && (
+          <p className="rounded-card border border-hairline bg-surface-sunk px-4 py-3 text-[13px] leading-relaxed text-ink-secondary">
+            Stops marked{" "}
+            <span className="font-semibold text-flag">Confirm locally</span> are
+            genuine steps we couldn&rsquo;t tie to an official online source in
+            time. They&rsquo;re shown honestly, not hidden &mdash; confirm the
+            exact rule and fee with the office before you file.
+          </p>
+        )}
+
+        {/* Change answers */}
+        <Link
+          href={`/questionnaire/${category}`}
+          className="inline-flex items-center gap-1.5 self-start font-signage text-sm font-semibold text-route underline decoration-route/30 underline-offset-2 hover:decoration-route"
+        >
+          <svg
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+            className="h-4 w-4"
+          >
+            <path d="M10 12 6 8l4-4" />
+          </svg>
+          Change my answers
+        </Link>
       </div>
     </main>
+  );
+}
+
+function Separator() {
+  return (
+    <span aria-hidden="true" className="mx-1.5 text-ink-muted">
+      ·
+    </span>
+  );
+}
+
+function EmptyRoute() {
+  return (
+    <div className="flex flex-col gap-2 rounded-card border border-hairline bg-surface px-5 py-8 text-center">
+      <p className="font-signage text-base font-semibold text-ink">
+        No licences matched your answers.
+      </p>
+      <p className="text-sm text-ink-secondary">
+        That&rsquo;s unusual &mdash; try changing your answers, and if it keeps
+        happening let us know.
+      </p>
+    </div>
   );
 }
