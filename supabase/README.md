@@ -64,7 +64,12 @@ reason and `npm test` stays green.
   `field_notes.reporter_contact` is PII (phone/email) and the raw table has
   no anon/authenticated SELECT policy at all. Community/UI reads (ticket 08)
   must query the `field_notes_public` view instead, which excludes
-  `reporter_contact` and is granted `SELECT` for `anon`/`authenticated`.
+  `reporter_contact` and is granted `SELECT` for `anon`/`authenticated`. The
+  view is declared `security_invoker = off` (runs as its owner), so it
+  bypasses the base table's RLS and actually returns rows to anon/
+  authenticated readers — with `security_invoker = on` it would enforce the
+  base table's (policy-less) RLS against the caller and return zero rows.
+  The PII-free column list on the view is the access control here, not RLS.
   Never add a public SELECT policy back onto the raw `field_notes` table.
 - The service-role key (`SUPABASE_SERVICE_ROLE_KEY`) bypasses RLS — used by
   seeding (ticket 04) and the admin panel (ticket 09), never in client code.

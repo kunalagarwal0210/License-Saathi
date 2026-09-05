@@ -205,12 +205,18 @@ create policy checklist_items_owner_all on checklist_items
 
 -- ── Public field-notes view (no PII) ────────────────────────────────────
 -- field_notes.reporter_contact is PII (phone/email) and must never be
--- exposed to public readers. The raw table has no public SELECT policy —
--- community/UI reads (ticket 08) go through this view instead, which omits
--- reporter_contact. security_invoker = on means the view runs with the
--- querying role's own privileges/RLS, not the view owner's.
+-- exposed to public readers. The base table has no anon/authenticated
+-- SELECT policy at all (see field_notes RLS above), so reporter_contact is
+-- never directly reachable. This view is the deliberately curated, PII-free
+-- public projection: security_invoker = off (the default, stated explicitly
+-- here) means it runs as its OWNER, bypassing the base table's RLS, so it
+-- returns rows to anon/authenticated instead of the zero rows you'd get if
+-- the view enforced the base table's (policy-less) RLS against the caller.
+-- This is the standard Postgres "safe public view" pattern: the view's own
+-- column list is the access control. Community/UI reads (ticket 08) must
+-- query this view, never the base field_notes table directly.
 create or replace view field_notes_public
-  with (security_invoker = on) as
+  with (security_invoker = off) as
   select
     id,
     license_id,
