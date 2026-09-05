@@ -89,9 +89,11 @@ For each role, pin **model + reasoning level** on purpose. Fill in when building
 
 | Role | Model | Reasoning level |
 |---|---|---|
-| Orchestrator | _(TBD)_ | _(TBD)_ |
-| Workers | _(TBD)_ | _(TBD)_ |
-| Cold reviewer | _(TBD)_ | _(TBD)_ |
+| Orchestrator | Opus 4.8 | high / xhigh |
+| Workers | Sonnet (default — mechanical, well-specced tickets); Opus for hard or design-judgment tickets | medium → high |
+| Cold reviewer | Opus | max |
+
+Rationale (per the guidance above): cheaper/faster Sonnet carries the wide mechanical building; the stronger Opus is reserved for the few hard pieces and for the final cold review, where being wrong is expensive. This is the lineup used from Ticket 02 onward (orchestrator = Opus, worker = Sonnet, cold review = Opus).
 
 Guidance: wide/mechanical building → cheaper/faster model; the few hard pieces → stronger model;
 reserve `max` reasoning for the final cold review, where being wrong is expensive.

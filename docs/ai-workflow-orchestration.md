@@ -53,9 +53,9 @@ cold review  = Fable 5   @ max     the final skeptic
 
 | Role | Model | Reasoning level |
 |---|---|---|
-| Orchestrator | | |
-| Workers | | |
-| Cold reviewer | | |
+| Orchestrator | Opus 4.8 | high / xhigh |
+| Workers | Sonnet (default — mechanical, well-specced tickets); Opus for hard or design-judgment tickets | medium → high |
+| Cold reviewer | Opus | max |
 
 ---
 
