@@ -56,8 +56,15 @@ reason and `npm test` stays green.
   rows) and **community field-notes** (`field_notes`, a separate table with
   no verified flag or source column).
 - All tables have RLS enabled, deny-by-default. `licenses`/`rules` are
-  public-read; `field_notes` is public-read + public-insert (moderation is
-  service-role only); `users`/`saved_checklists`/`checklist_items` are
-  owner-only via `auth.uid()`, ready for ticket 10's auth flow.
+  public-read; `field_notes` is public-insert only (no public/anon SELECT on
+  the raw table — moderation is service-role only); `users`/
+  `saved_checklists`/`checklist_items` are owner-only via `auth.uid()`, ready
+  for ticket 10's auth flow.
+- **`field_notes_public` view, not the raw table, is the public read path.**
+  `field_notes.reporter_contact` is PII (phone/email) and the raw table has
+  no anon/authenticated SELECT policy at all. Community/UI reads (ticket 08)
+  must query the `field_notes_public` view instead, which excludes
+  `reporter_contact` and is granted `SELECT` for `anon`/`authenticated`.
+  Never add a public SELECT policy back onto the raw `field_notes` table.
 - The service-role key (`SUPABASE_SERVICE_ROLE_KEY`) bypasses RLS — used by
   seeding (ticket 04) and the admin panel (ticket 09), never in client code.

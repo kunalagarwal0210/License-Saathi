@@ -146,6 +146,14 @@ export type FieldNotesInsert = {
 };
 export type FieldNotesUpdate = Partial<FieldNotesInsert>;
 
+/**
+ * Row shape of the `field_notes_public` view (see migration) — every
+ * `field_notes` column except `reporter_contact`, which is PII and must
+ * never reach public/anon readers. Community/UI reads (ticket 08) should
+ * query this view, never the raw `field_notes` table.
+ */
+export type FieldNotePublicRow = Omit<FieldNotesRow, "reporter_contact">;
+
 /** Matches the shape produced by `supabase gen types typescript`. */
 export type Database = {
   public: {
@@ -221,7 +229,19 @@ export type Database = {
         ];
       };
     };
-    Views: Record<string, never>;
+    Views: {
+      field_notes_public: {
+        Row: FieldNotePublicRow;
+        Relationships: [
+          {
+            foreignKeyName: "field_notes_license_id_fkey";
+            columns: ["license_id"];
+            referencedRelation: "licenses";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+    };
     Functions: Record<string, never>;
     Enums: {
       business_category: BusinessCategory;

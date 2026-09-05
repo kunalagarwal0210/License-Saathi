@@ -158,15 +158,15 @@ drop policy if exists rules_select_public on rules;
 create policy rules_select_public on rules
   for select to anon, authenticated using (true);
 
--- field_notes: community can submit and read; no anon/auth update/delete
--- (moderation is service-role only).
+-- field_notes: community can submit; no anon/auth update/delete/select on
+-- the raw table (moderation is service-role only, and reporter_contact is
+-- PII that must never be exposed to public readers — see field_notes_public
+-- view below, which is the only public read path).
 drop policy if exists field_notes_insert_public on field_notes;
 create policy field_notes_insert_public on field_notes
-  for insert to anon, authenticated with check (true);
+  for insert to anon, authenticated with check (status = 'new');
 
 drop policy if exists field_notes_select_public on field_notes;
-create policy field_notes_select_public on field_notes
-  for select to anon, authenticated using (true);
 
 -- users / saved_checklists / checklist_items: owner-only via auth.uid().
 -- Schema-ready for ticket 10 auth; deny-by-default is the safe MVP posture
@@ -202,3 +202,23 @@ create policy checklist_items_owner_all on checklist_items
         and sc.user_id = auth.uid()
     )
   );
+
+-- ── Public field-notes view (no PII) ────────────────────────────────────
+-- field_notes.reporter_contact is PII (phone/email) and must never be
+-- exposed to public readers. The raw table has no public SELECT policy —
+-- community/UI reads (ticket 08) go through this view instead, which omits
+-- reporter_contact. security_invoker = on means the view runs with the
+-- querying role's own privileges/RLS, not the view owner's.
+create or replace view field_notes_public
+  with (security_invoker = on) as
+  select
+    id,
+    license_id,
+    what_happened,
+    extra_doc,
+    extra_fee,
+    status,
+    created_at
+  from field_notes;
+
+grant select on field_notes_public to anon, authenticated;

@@ -4,17 +4,18 @@
  *
  * ⚠️ SERVER ONLY. Never import this module from client components or any
  * code that ships to the browser bundle — `SUPABASE_SERVICE_ROLE_KEY` has no
- * `NEXT_PUBLIC_` prefix specifically so Next.js keeps it out of client code,
- * but importing this file from a "use client" module would still try to
- * read that env var in the browser and fail loudly. Use it only from route
- * handlers, server actions, server components, and scripts (seeding, the
- * admin panel, moderation).
+ * `NEXT_PUBLIC_` prefix specifically so Next.js keeps it out of client code.
+ * The `server-only` import below turns an accidental client-bundle import
+ * into a build error, rather than relying on this comment alone. Use this
+ * module only from route handlers, server actions, server components, and
+ * scripts (seeding, the admin panel, moderation).
  *
  * The client is constructed lazily, inside the getter, not at module top
  * level — so importing this file never throws, and `next build` succeeds
  * with no Supabase env set. The error only surfaces if/when code actually
  * calls `getSupabaseAdmin()` without the env configured.
  */
+import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
 
