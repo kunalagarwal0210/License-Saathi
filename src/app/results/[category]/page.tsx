@@ -4,9 +4,12 @@ import { isCategory, CATEGORY_DEFINITIONS } from "@/lib/categories";
 import { searchParamsToAnswers } from "@/lib/questionnaire";
 import { resolveLicenses } from "@/lib/engine/resolveLicenses";
 import { verifiedRulesSource, verifiedLicensesById } from "@/lib/data/verified";
+import { loadDbRoute } from "@/lib/data/dbSource";
 import { buildRouteStations, summarizeRoute } from "@/lib/data/routeView";
 import { getPublicFieldNotes } from "@/lib/data/fieldNotes";
 import { isEnabled } from "@/lib/flags";
+import type { RulesSource } from "@/lib/engine/types";
+import type { VerifiedLicense } from "@/lib/data/verified";
 import type { FieldNotePublicRow } from "@/lib/supabase/types";
 import { StationCard } from "@/components/StationCard";
 import { FieldNotes } from "@/components/FieldNotes";
@@ -35,8 +38,26 @@ export default async function ResultsPage({ params, searchParams }: ResultsPageP
   }
 
   const answers = searchParamsToAnswers(query);
-  const ordered = resolveLicenses(category, answers, verifiedRulesSource);
-  const stations = buildRouteStations(ordered, verifiedLicensesById);
+
+  // Option A (FEATURE_RESULTS_FROM_DB): read licences/rules from Supabase —
+  // real uuid ids end to end — instead of the bundled verified.ts slugs.
+  // This is what field notes need (field_notes.license_id is a uuid FK); it
+  // falls back to verified.ts on ANY DB error so the results page never
+  // breaks for a demo. When the flag is off, behaviour is unchanged.
+  let rulesSource: RulesSource = verifiedRulesSource;
+  let licensesById: ReadonlyMap<string, VerifiedLicense> = verifiedLicensesById;
+  if (isEnabled("FEATURE_RESULTS_FROM_DB")) {
+    try {
+      const dbRoute = await loadDbRoute();
+      rulesSource = dbRoute.rulesSource;
+      licensesById = dbRoute.licensesById;
+    } catch {
+      // fall back to the verified.ts defaults already assigned above
+    }
+  }
+
+  const ordered = resolveLicenses(category, answers, rulesSource);
+  const stations = buildRouteStations(ordered, licensesById);
   const summary = summarizeRoute(stations);
 
   // Ticket 08 — community field-notes tier, gated behind FEATURE_FIELD_NOTES.
