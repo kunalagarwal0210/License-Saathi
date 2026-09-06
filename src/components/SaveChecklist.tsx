@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { createSupabaseBrowserAuthClient } from "@/lib/supabase/browser-auth";
 import { isValidEmail, isValidOtp } from "@/lib/checklist/saveChecklist";
 import { saveChecklist } from "@/app/results/[category]/actions";
@@ -235,10 +236,20 @@ export function SaveChecklist({ category, answers }: SaveChecklistProps) {
       )}
 
       {step === "done" && (
-        <p className="flex items-center gap-1.5 text-sm font-semibold text-verified">
-          <CheckIcon className="h-4 w-4" />
-          {message}
-        </p>
+        <div className="flex flex-col gap-1.5">
+          <p className="flex items-center gap-1.5 text-sm font-semibold text-verified">
+            <CheckIcon className="h-4 w-4" />
+            {message}
+          </p>
+          {/* Ticket 11 — the only entry point into the returning dashboard
+              reachable from the save-success state. */}
+          <Link
+            href="/dashboard"
+            className="w-fit text-sm font-semibold text-route underline decoration-route/30 underline-offset-2 hover:decoration-route"
+          >
+            View my saved routes
+          </Link>
+        </div>
       )}
 
       <p aria-live="polite" className="text-[13px] leading-relaxed text-ink-secondary">
