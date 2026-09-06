@@ -13,6 +13,14 @@
  * Usage (once env is set):
  *   npx tsx scripts/seed-verified.ts
  *
+ * This script needs a service-role admin client, but it runs standalone
+ * under `tsx` (not inside Next's bundler), so it can't import
+ * `src/lib/supabase/admin.ts` — that file starts with `import "server-only"`,
+ * which throws outside Next's build pipeline. Instead this script builds its
+ * own local admin client below, reading the same two env vars, loaded from
+ * `.env.local` by the minimal parse at the top of this file (no `dotenv`
+ * dependency in package.json, so no new dependency is added for this).
+ *
  * Idempotency strategy: the DB's `licenses.id` is a server-generated uuid,
  * not the human-readable string id (`"shop_establishment_eatery"`, etc.)
  * used in verified.ts and by the rules engine. Re-running this script must
@@ -24,9 +32,46 @@
  * license ids in this seed set is deleted and reinserted fresh each run, so
  * `rules` always exactly mirrors `verified.ts`.
  */
-import { getSupabaseAdmin } from "../src/lib/supabase/admin";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { verifiedLicenses, verifiedRules, type VerifiedLicense } from "../src/lib/data/verified";
+import type { Database } from "../src/lib/supabase/types";
 import type { LicensesInsert, LicensesRow, RulesInsert } from "../src/lib/supabase/types";
+
+// Minimal `.env.local` loader — only sets a var if it isn't already present
+// in the environment (matches dotenv's default precedence), so real env vars
+// (e.g. in CI) still win.
+function loadEnvLocal(): void {
+  const path = resolve(__dirname, "../.env.local");
+  if (!existsSync(path)) return;
+  for (const line of readFileSync(path, "utf8").split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq === -1) continue;
+    const key = trimmed.slice(0, eq).trim();
+    const value = trimmed.slice(eq + 1).trim().replace(/^["']|["']$/g, "");
+    if (process.env[key] === undefined) process.env[key] = value;
+  }
+}
+loadEnvLocal();
+
+// Script-local admin client — see file-header comment for why this can't
+// import `src/lib/supabase/admin.ts` directly.
+function getSupabaseAdmin(): SupabaseClient<Database> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url) {
+    throw new Error("seed-verified: NEXT_PUBLIC_SUPABASE_URL is not set. See .env.example.");
+  }
+  if (!serviceRoleKey) {
+    throw new Error("seed-verified: SUPABASE_SERVICE_ROLE_KEY is not set. See .env.example.");
+  }
+  return createClient<Database>(url, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+}
 
 function toLicensesInsert(license: VerifiedLicense): LicensesInsert {
   return {
