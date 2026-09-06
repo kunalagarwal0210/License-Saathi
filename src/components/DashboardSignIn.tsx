@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserAuthClient } from "@/lib/supabase/browser-auth";
 import { isValidEmail, isValidOtp } from "@/lib/checklist/saveChecklist";
+import { AuthDivider, GoogleSignInButton } from "@/components/GoogleSignInButton";
 
 type Step = "email" | "code" | "error";
 
@@ -164,6 +165,13 @@ export function DashboardSignIn() {
       <p aria-live="polite" className="text-[13px] leading-relaxed text-ink-secondary">
         {message}
       </p>
+
+      {/* Ticket 16 — additive Google option. On success the callback route
+          redirects a full navigation to /dashboard, which then finds the
+          session server-side and renders the checklist list; no
+          router.refresh() needed here (unlike the OTP path above). */}
+      <AuthDivider />
+      <GoogleSignInButton next="/dashboard" />
     </div>
   );
 }
