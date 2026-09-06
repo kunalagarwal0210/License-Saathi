@@ -89,26 +89,36 @@ export type RulesUpdate = Partial<RulesInsert>;
 
 // Ticket 10 (migration 0002): `phone` is now nullable (email-OTP sign-in
 // never populates it) and `email` is the new identity column that does.
+// Ticket 14 (migration 0003): `reminders_opt_out` (set by the unsubscribe
+// page) and `unsubscribe_token` (embedded in every reminder email's footer
+// link) support the reminder-email job.
 export type UsersRow = {
   id: string;
   phone: string | null;
   email: string | null;
   created_at: string;
+  reminders_opt_out: boolean;
+  unsubscribe_token: string;
 };
 export type UsersInsert = {
   phone?: string | null;
   email?: string | null;
   id?: string;
   created_at?: string;
+  reminders_opt_out?: boolean;
+  unsubscribe_token?: string;
 };
 export type UsersUpdate = Partial<UsersInsert>;
 
+// Ticket 14 (migration 0003): `last_reminded_at` lets the reminder job space
+// reminders out (see `src/lib/reminders/selectReminders.ts`).
 export type SavedChecklistsRow = {
   id: string;
   user_id: string;
   category: BusinessCategory;
   answers: Record<string, unknown>;
   created_at: string;
+  last_reminded_at: string | null;
 };
 export type SavedChecklistsInsert = {
   user_id: string;
@@ -116,6 +126,7 @@ export type SavedChecklistsInsert = {
   answers: Record<string, unknown>;
   id?: string;
   created_at?: string;
+  last_reminded_at?: string | null;
 };
 export type SavedChecklistsUpdate = Partial<SavedChecklistsInsert>;
 
