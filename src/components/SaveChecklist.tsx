@@ -7,6 +7,7 @@ import { isValidEmail, isValidOtp } from "@/lib/checklist/saveChecklist";
 import { saveChecklist } from "@/app/results/[category]/actions";
 import type { Answers, BusinessCategory } from "@/lib/engine/types";
 import { ANALYTICS_EVENTS, identifyUser, track } from "@/lib/analytics";
+import { AuthDivider, GoogleSignInButton } from "@/components/GoogleSignInButton";
 
 type SaveChecklistProps = {
   category: BusinessCategory;
@@ -179,29 +180,42 @@ export function SaveChecklist({ category, answers }: SaveChecklistProps) {
       </div>
 
       {step === "email" && (
-        <form onSubmit={handleEmailSubmit} className="flex flex-col gap-2">
-          <label htmlFor="save-checklist-email" className="font-signage text-xs font-semibold text-ink">
-            Email address
-          </label>
-          <input
-            id="save-checklist-email"
-            type="email"
-            inputMode="email"
-            autoComplete="email"
-            required
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="you@example.com"
-            className="min-h-[44px] rounded-control border border-hairline bg-surface px-3 text-sm text-ink outline-none focus-visible:ring-2 focus-visible:ring-route"
-          />
-          <button
-            type="submit"
-            disabled={pending}
-            className="inline-flex min-h-[44px] items-center justify-center rounded-control bg-route px-4 font-signage text-sm font-semibold text-on-route transition hover:bg-route/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-route focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-60"
-          >
-            {pending ? "Sending code…" : "Email me a code"}
-          </button>
-        </form>
+        <div className="flex flex-col gap-3">
+          <form onSubmit={handleEmailSubmit} className="flex flex-col gap-2">
+            <label htmlFor="save-checklist-email" className="font-signage text-xs font-semibold text-ink">
+              Email address
+            </label>
+            <input
+              id="save-checklist-email"
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="you@example.com"
+              className="min-h-[44px] rounded-control border border-hairline bg-surface px-3 text-sm text-ink outline-none focus-visible:ring-2 focus-visible:ring-route"
+            />
+            <button
+              type="submit"
+              disabled={pending}
+              className="inline-flex min-h-[44px] items-center justify-center rounded-control bg-route px-4 font-signage text-sm font-semibold text-on-route transition hover:bg-route/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-route focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-60"
+            >
+              {pending ? "Sending code…" : "Email me a code"}
+            </button>
+          </form>
+
+          {/* Ticket 16 — additive Google option, no `next` so the callback
+              route returns the user to this same results page (default is
+              window.location.pathname + search). We deliberately do NOT
+              auto-save after the round-trip: the user lands back here
+              signed in and simply clicks "Save my checklist" again, which
+              `handleSaveClick` then saves immediately via the existing
+              getSession() check above. Two clicks, but no extra state
+              machine — good enough for MVP. */}
+          <AuthDivider />
+          <GoogleSignInButton />
+        </div>
       )}
 
       {step === "code" && (
