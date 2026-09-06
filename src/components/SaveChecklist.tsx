@@ -219,6 +219,21 @@ export function SaveChecklist({ category, answers }: SaveChecklistProps) {
         <p className="text-sm font-medium text-ink-secondary">Saving your checklist…</p>
       )}
 
+      {step === "error" && (
+        <button
+          type="button"
+          onClick={() => {
+            setCode("");
+            setMessage("");
+            setStep("email");
+          }}
+          disabled={pending}
+          className="inline-flex min-h-[44px] items-center justify-center rounded-control border border-route px-4 font-signage text-sm font-semibold text-route transition hover:bg-route-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-route focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-60"
+        >
+          Try again
+        </button>
+      )}
+
       {step === "done" && (
         <p className="flex items-center gap-1.5 text-sm font-semibold text-verified">
           <CheckIcon className="h-4 w-4" />
