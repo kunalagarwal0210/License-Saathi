@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { isEnabled } from "@/lib/flags";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { CATEGORY_DEFINITIONS } from "@/lib/categories";
-import { getResultsHref, searchParamsToAnswers } from "@/lib/questionnaire";
 import { formatVerifiedDate } from "@/lib/data/routeView";
 import { summarizeChecklistItems } from "@/lib/checklist/dashboard";
 import type { BusinessCategory } from "@/lib/engine/types";
@@ -64,9 +63,9 @@ export default async function DashboardPage() {
             {checklists.map((checklist) => (
               <li key={checklist.id}>
                 <ChecklistCard
+                  checklistId={checklist.id}
                   category={checklist.category}
                   createdAt={checklist.created_at}
-                  answers={checklist.answers}
                   items={checklist.checklist_items ?? []}
                 />
               </li>
@@ -115,20 +114,20 @@ function EmptyState() {
 }
 
 type ChecklistCardProps = {
+  checklistId: string;
   category: BusinessCategory;
   createdAt: string;
-  // jsonb, but always written from `Answers` by the save action — see
-  // `src/app/results/[category]/actions.ts`.
-  answers: Record<string, unknown>;
   items: { status: string; license_id: string; licenses: { name: string } | null }[];
 };
 
-function ChecklistCard({ category, createdAt, answers, items }: ChecklistCardProps) {
+function ChecklistCard({ checklistId, category, createdAt, items }: ChecklistCardProps) {
   const categoryLabel =
     CATEGORY_DEFINITIONS.find((definition) => definition.id === category)?.label ?? category;
   const summary = summarizeChecklistItems(items);
   const percentDone = summary.total === 0 ? 0 : Math.round((summary.done / summary.total) * 100);
-  const resumeHref = getResultsHref(category, answersFromJsonb(answers));
+  // Ticket 12 — Resume now opens the real checklist detail (mark-done +
+  // document pack) instead of the ticket 11 stopgap back to /results.
+  const resumeHref = `/checklist/${checklistId}`;
 
   const PENDING_PREVIEW_COUNT = 3;
   const pendingPreview = summary.pendingNames.slice(0, PENDING_PREVIEW_COUNT);
@@ -182,20 +181,3 @@ function ChecklistCard({ category, createdAt, answers, items }: ChecklistCardPro
   );
 }
 
-/**
- * The `answers` jsonb column always holds exactly what `saveChecklist`
- * inserted — an `Answers` object serialized to JSON (see
- * `src/app/results/[category]/actions.ts`). Round-tripping it through
- * `searchParamsToAnswers`'s existing key/value allow-list (rather than a
- * blind cast) means a corrupted/hand-edited row degrades to "fewer answers"
- * instead of building a broken results link.
- */
-function answersFromJsonb(raw: Record<string, unknown>) {
-  const asParams: Record<string, string> = {};
-  for (const [key, value] of Object.entries(raw)) {
-    if (value !== undefined && value !== null) {
-      asParams[key] = String(value);
-    }
-  }
-  return searchParamsToAnswers(asParams);
-}
