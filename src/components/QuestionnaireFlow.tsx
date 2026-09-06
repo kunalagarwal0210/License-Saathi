@@ -9,6 +9,7 @@ import {
   getVisibleQuestions,
 } from "@/lib/questionnaire";
 import { CATEGORY_DEFINITIONS } from "@/lib/categories";
+import { ANALYTICS_EVENTS, track } from "@/lib/analytics";
 
 type QuestionnaireFlowProps = {
   category: BusinessCategory;
@@ -67,6 +68,7 @@ export function QuestionnaireFlow({ category }: QuestionnaireFlowProps) {
     // Last question answered — finalize (fill in skipped-branch defaults)
     // and hand off to the results route via the answers-in-URL contract.
     const finalAnswers = applySkippedDefaults(category, answers);
+    track(ANALYTICS_EVENTS.questionnaireCompleted, { category });
     router.push(getResultsHref(category, finalAnswers));
   }
 

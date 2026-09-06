@@ -7,6 +7,7 @@ import { formatVerifiedDate } from "@/lib/data/routeView";
 import { summarizeChecklistItems } from "@/lib/checklist/dashboard";
 import type { BusinessCategory } from "@/lib/engine/types";
 import { DashboardSignIn } from "@/components/DashboardSignIn";
+import { AnalyticsIdentify } from "@/components/AnalyticsIdentify";
 
 // Same reasoning as `src/app/admin/layout.tsx`: this route reads the caller's
 // own session + DB rows on every request, so it must never be statically
@@ -47,6 +48,9 @@ export default async function DashboardPage() {
   return (
     <main className="flex flex-1 flex-col items-center px-4 py-10 sm:py-12">
       <div className="flex w-full max-w-[600px] flex-col gap-6">
+        {/* Ticket 13 — ties this authed session's events (e.g. a mark-done
+            reached via Resume) to the same Mixpanel identity as save time. */}
+        <AnalyticsIdentify userId={user.id} />
         <DashboardHeader />
 
         {error && (

@@ -12,6 +12,7 @@ import { DashboardSignIn } from "@/components/DashboardSignIn";
 import { StationCard } from "@/components/StationCard";
 import { ChecklistItemToggle } from "@/components/ChecklistItemToggle";
 import { PrintButton } from "@/components/PrintButton";
+import { AnalyticsIdentify } from "@/components/AnalyticsIdentify";
 
 type ChecklistDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -92,6 +93,9 @@ export default async function ChecklistDetailPage({ params }: ChecklistDetailPag
   return (
     <main className="flex flex-1 flex-col items-center px-4 py-10 sm:py-12">
       <div className="flex w-full max-w-[600px] flex-col gap-8">
+        {/* Ticket 13 — ties `license_marked_done` on this page to the same
+            Mixpanel identity set at save-checklist time. */}
+        <AnalyticsIdentify userId={user.id} />
         {/* Header */}
         <header className="flex flex-col gap-3">
           <div className="print-hide flex flex-col gap-2">

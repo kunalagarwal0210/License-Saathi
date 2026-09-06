@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Overpass, Hind } from "next/font/google";
 import "./globals.css";
+import { AnalyticsInit } from "@/components/AnalyticsInit";
 
 // Signage register — Overpass (derived from Highway Gothic). Variable font.
 const overpass = Overpass({
@@ -36,6 +37,9 @@ export default function RootLayout({
       className={`${overpass.variable} ${hind.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-ground text-ink font-body">
+        {/* Ticket 13 — token-gated analytics init; no-ops when
+            NEXT_PUBLIC_MIXPANEL_TOKEN is unset. */}
+        <AnalyticsInit />
         {children}
       </body>
     </html>
