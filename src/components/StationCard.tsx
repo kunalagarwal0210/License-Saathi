@@ -1,5 +1,6 @@
 import type { VerifiedLicense } from "@/lib/data/verified";
 import { formatFee, formatVerifiedDate } from "@/lib/data/routeView";
+import { PortalLink } from "@/components/PortalLink";
 
 type StationCardProps = {
   license: VerifiedLicense;
@@ -93,11 +94,13 @@ export function StationCard({ license }: StationCardProps) {
         </div>
       </details>
 
-      {/* Primary action — deep link to the correct official portal. */}
-      <a
+      {/* Primary action — deep link to the correct official portal. Wrapped in
+          a client component (ticket 13) so clicking it fires
+          `portal_link_clicked` without making this card a client component. */}
+      <PortalLink
         href={license.portalDeepLink}
-        target="_blank"
-        rel="noopener noreferrer"
+        licenseId={license.id}
+        licenseName={license.name}
         className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-control bg-route px-4 py-2.5 font-signage text-sm font-semibold text-on-route transition-colors hover:bg-route-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-route focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
       >
         Open official portal
@@ -113,7 +116,7 @@ export function StationCard({ license }: StationCardProps) {
         >
           <path d="M6 3h7v7M13 3 6 10M11 9v4H3V5h4" />
         </svg>
-      </a>
+      </PortalLink>
     </article>
   );
 }

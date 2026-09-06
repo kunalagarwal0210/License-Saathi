@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { setChecklistItemStatus } from "@/app/checklist/[id]/actions";
+import { ANALYTICS_EVENTS, track } from "@/lib/analytics";
 
 type ChecklistItemToggleProps = {
   checklistId: string;
@@ -45,6 +46,11 @@ export function ChecklistItemToggle({
             : (result.message ?? "Couldn't save that change. Please try again.")
         );
         return;
+      }
+      // Ticket 13 — North Star signal. Only on the done transition (not
+      // undo), matching the acceptance criterion ("marked >=1 licence done").
+      if (next) {
+        track(ANALYTICS_EVENTS.licenseMarkedDone, { checklistId, licenseId });
       }
       router.refresh();
     });

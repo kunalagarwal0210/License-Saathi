@@ -6,6 +6,7 @@ import { createSupabaseBrowserAuthClient } from "@/lib/supabase/browser-auth";
 import { isValidEmail, isValidOtp } from "@/lib/checklist/saveChecklist";
 import { saveChecklist } from "@/app/results/[category]/actions";
 import type { Answers, BusinessCategory } from "@/lib/engine/types";
+import { ANALYTICS_EVENTS, identifyUser, track } from "@/lib/analytics";
 
 type SaveChecklistProps = {
   category: BusinessCategory;
@@ -116,6 +117,19 @@ export function SaveChecklist({ category, answers }: SaveChecklistProps) {
     setStep("saving");
     setMessage("");
     try {
+      // Ticket 13 — identify before saving (not after) so the write itself,
+      // and anything the user does next in this session, is already tied to
+      // their Mixpanel distinct_id. Covers both entry paths into this
+      // function: an already-signed-in return visit (getSession) and a
+      // fresh signInWithOtp -> verifyOtp.
+      const supabase = createSupabaseBrowserAuthClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        identifyUser(user.id);
+      }
+
       const result = await saveChecklist({ category, answers });
       if (!result.ok) {
         if (result.reason === "unauthenticated") {
@@ -129,6 +143,7 @@ export function SaveChecklist({ category, answers }: SaveChecklistProps) {
         }
         return;
       }
+      track(ANALYTICS_EVENTS.checklistSaved, { category, checklistId: result.checklistId });
       setStep("done");
       setMessage("Saved — we'll keep your checklist so you can track it.");
     } catch {

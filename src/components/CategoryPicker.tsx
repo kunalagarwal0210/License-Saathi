@@ -8,6 +8,7 @@ import {
   type Category,
 } from "@/lib/categories";
 import { CategoryCard } from "@/components/CategoryCard";
+import { ANALYTICS_EVENTS, track } from "@/lib/analytics";
 
 // Owns the landing page's "What are you opening?" selection state and the
 // primary CTA that carries the choice into the questionnaire route
@@ -20,6 +21,9 @@ export function CategoryPicker() {
 
   function handleFindLicenses() {
     if (!selected) return;
+    // Ticket 13 — top of the funnel: fired as the user commits to a category,
+    // right before we route them into the questionnaire.
+    track(ANALYTICS_EVENTS.flowStarted, { category: selected });
     router.push(getQuestionnaireHref(selected));
   }
 

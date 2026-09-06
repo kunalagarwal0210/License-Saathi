@@ -15,6 +15,8 @@ import { StationCard } from "@/components/StationCard";
 import { FieldNotes } from "@/components/FieldNotes";
 import { ShareRoute } from "@/components/ShareRoute";
 import { SaveChecklist } from "@/components/SaveChecklist";
+import { TrackOnMount } from "@/components/TrackOnMount";
+import { ANALYTICS_EVENTS } from "@/lib/analytics";
 
 type ResultsPageProps = {
   params: Promise<{ category: string }>;
@@ -74,6 +76,9 @@ export default async function ResultsPage({ params, searchParams }: ResultsPageP
 
   return (
     <main className="flex flex-1 flex-col items-center px-4 py-10 sm:py-12">
+      {/* Ticket 13 — the route/list is fully server-rendered, so this client
+          sliver is the only way to emit `list_viewed` for the funnel. */}
+      <TrackOnMount event={ANALYTICS_EVENTS.listViewed} props={{ category }} />
       <div className="flex w-full max-w-[600px] flex-col gap-8">
         {/* Header */}
         <header className="flex flex-col gap-2">
