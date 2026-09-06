@@ -180,6 +180,14 @@ export default async function ChecklistDetailPage({ params }: ChecklistDetailPag
                         licenseId={station.license.id}
                         initialDone={isDone}
                       />
+                      {/* Ticket 15 — community field-note capture entry
+                          point. Quiet/amber, never the primary action. */}
+                      <Link
+                        href={`/notes/${station.license.id}`}
+                        className="w-fit font-signage text-xs font-semibold text-note underline decoration-note/30 underline-offset-2 hover:decoration-note"
+                      >
+                        Share what happened
+                      </Link>
                     </div>
                   </div>
                 </li>
