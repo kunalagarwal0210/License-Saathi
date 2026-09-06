@@ -1,6 +1,7 @@
 /**
  * Handwritten Supabase `Database` type — must match
- * `supabase/migrations/0001_initial_schema.sql` exactly.
+ * `supabase/migrations/0001_initial_schema.sql` and
+ * `supabase/migrations/0002_auth_email.sql` exactly.
  *
  * We cannot run `supabase gen types` without a live project (ticket 02 ships
  * schema-as-code only), so this is maintained by hand. If the migration
@@ -86,13 +87,17 @@ export type RulesInsert = {
 };
 export type RulesUpdate = Partial<RulesInsert>;
 
+// Ticket 10 (migration 0002): `phone` is now nullable (email-OTP sign-in
+// never populates it) and `email` is the new identity column that does.
 export type UsersRow = {
   id: string;
-  phone: string;
+  phone: string | null;
+  email: string | null;
   created_at: string;
 };
 export type UsersInsert = {
-  phone: string;
+  phone?: string | null;
+  email?: string | null;
   id?: string;
   created_at?: string;
 };

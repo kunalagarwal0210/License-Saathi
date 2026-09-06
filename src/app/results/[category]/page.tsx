@@ -14,6 +14,7 @@ import type { FieldNotePublicRow } from "@/lib/supabase/types";
 import { StationCard } from "@/components/StationCard";
 import { FieldNotes } from "@/components/FieldNotes";
 import { ShareRoute } from "@/components/ShareRoute";
+import { SaveChecklist } from "@/components/SaveChecklist";
 
 type ResultsPageProps = {
   params: Promise<{ category: string }>;
@@ -178,6 +179,12 @@ export default async function ResultsPage({ params, searchParams }: ResultsPageP
 
           <ShareRoute />
         </div>
+
+        {/* Ticket 10 — save checklist (email-OTP), gated behind
+            FEATURE_SAVE_CHECKLIST. Discovery above is unaffected either way. */}
+        {isEnabled("FEATURE_SAVE_CHECKLIST") && (
+          <SaveChecklist category={category} answers={answers} />
+        )}
       </div>
     </main>
   );
