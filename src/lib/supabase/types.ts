@@ -99,6 +99,7 @@ export type UsersRow = {
   created_at: string;
   reminders_opt_out: boolean;
   unsubscribe_token: string;
+  is_admin: boolean;
 };
 export type UsersInsert = {
   phone?: string | null;
@@ -107,6 +108,7 @@ export type UsersInsert = {
   created_at?: string;
   reminders_opt_out?: boolean;
   unsubscribe_token?: string;
+  is_admin?: boolean;
 };
 export type UsersUpdate = Partial<UsersInsert>;
 

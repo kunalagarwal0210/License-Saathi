@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { isEnabled } from "@/lib/flags";
+import { requireAdmin } from "@/lib/auth/requireAdmin";
+import { DashboardSignIn } from "@/components/DashboardSignIn";
 
 // Admin reads/writes live DB state through the service-role client and must
 // never be statically prerendered or cached — `next build` would otherwise
@@ -15,9 +17,22 @@ export const dynamic = "force-dynamic";
 // route/sub-route 404s because every request under /admin renders this
 // layout first. Operate-mode shell: a plain header + nav, no chrome beyond
 // what scanning the spine needs.
-export default function AdminLayout({ children }: { children: ReactNode }) {
+export default async function AdminLayout({ children }: { children: ReactNode }) {
   if (!isEnabled("FEATURE_ADMIN")) {
     notFound();
+  }
+
+  const access = await requireAdmin();
+  if (access === "forbidden") {
+    notFound();
+  }
+  if (access === "anonymous") {
+    return (
+      <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-8 sm:px-6">
+        <h1 className="font-signage text-xl font-bold text-ink">Admin sign-in</h1>
+        <DashboardSignIn next="/admin" googleEnabled={isEnabled("FEATURE_GOOGLE_AUTH")} />
+      </div>
+    );
   }
 
   return (
