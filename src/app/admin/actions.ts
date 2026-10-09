@@ -10,7 +10,8 @@
  * of the DB. Not unit-tested directly (needs a live DB); the parsing logic
  * they call IS unit-tested.
  */
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { revalidatePath } from "next/cache";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import {
@@ -19,6 +20,10 @@ import {
   type LicenseFormInput,
 } from "@/lib/admin/licenseForm";
 import { parseRuleForm, type RuleFormErrors, type RuleFormInput } from "@/lib/admin/ruleForm";
+
+async function assertAdmin(): Promise<void> {
+  if ((await requireAdmin()) !== "ok") notFound();
+}
 
 export type LicenseActionState = {
   values: LicenseFormInput;
@@ -62,6 +67,7 @@ export async function createLicense(
   _prevState: LicenseActionState,
   formData: FormData
 ): Promise<LicenseActionState> {
+  await assertAdmin();
   const values = extractLicenseInput(formData);
   const result = parseLicenseForm(values);
   if (!result.payload) {
@@ -83,6 +89,7 @@ export async function updateLicense(
   _prevState: LicenseActionState,
   formData: FormData
 ): Promise<LicenseActionState> {
+  await assertAdmin();
   const values = extractLicenseInput(formData);
   const result = parseLicenseForm(values);
   if (!result.payload) {
@@ -100,6 +107,7 @@ export async function updateLicense(
 }
 
 export async function deleteLicense(id: string): Promise<void> {
+  await assertAdmin();
   const admin = getSupabaseAdmin();
   const { error } = await admin.from("licenses").delete().eq("id", id);
   if (error) {
@@ -113,6 +121,7 @@ export async function createRule(
   _prevState: RuleActionState,
   formData: FormData
 ): Promise<RuleActionState> {
+  await assertAdmin();
   const values = extractRuleInput(formData);
   const result = parseRuleForm(values);
   if (!result.payload) {
@@ -134,6 +143,7 @@ export async function updateRule(
   _prevState: RuleActionState,
   formData: FormData
 ): Promise<RuleActionState> {
+  await assertAdmin();
   const values = extractRuleInput(formData);
   const result = parseRuleForm(values);
   if (!result.payload) {
@@ -151,6 +161,7 @@ export async function updateRule(
 }
 
 export async function deleteRule(id: string): Promise<void> {
+  await assertAdmin();
   const admin = getSupabaseAdmin();
   const { error } = await admin.from("rules").delete().eq("id", id);
   if (error) {
