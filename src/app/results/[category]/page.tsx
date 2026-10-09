@@ -188,7 +188,11 @@ export default async function ResultsPage({ params, searchParams }: ResultsPageP
         {/* Ticket 10 — save checklist (email-OTP), gated behind
             FEATURE_SAVE_CHECKLIST. Discovery above is unaffected either way. */}
         {isEnabled("FEATURE_SAVE_CHECKLIST") && (
-          <SaveChecklist category={category} answers={answers} />
+          <SaveChecklist
+            category={category}
+            answers={answers}
+            googleEnabled={isEnabled("FEATURE_GOOGLE_AUTH")}
+          />
         )}
       </div>
     </main>

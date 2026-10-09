@@ -34,7 +34,7 @@ export default async function DashboardPage() {
       <main className="flex flex-1 flex-col items-center px-4 py-10 sm:py-12">
         <div className="flex w-full max-w-[600px] flex-col gap-6">
           <DashboardHeader />
-          <DashboardSignIn />
+          <DashboardSignIn googleEnabled={isEnabled("FEATURE_GOOGLE_AUTH")} />
         </div>
       </main>
     );

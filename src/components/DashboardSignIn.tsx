@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserAuthClient } from "@/lib/supabase/browser-auth";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import { isValidEmail, isValidOtp } from "@/lib/checklist/saveChecklist";
 
 type Step = "email" | "code" | "error";
@@ -13,7 +14,13 @@ type Step = "email" | "code" | "error";
 // can find their `saved_checklists` rows. On success we `router.refresh()`
 // rather than navigate, so `dashboard/page.tsx` re-runs with the new session
 // and swaps this component out for the checklist list itself.
-export function DashboardSignIn() {
+export function DashboardSignIn({
+  next = "/dashboard",
+  googleEnabled = false,
+}: {
+  next?: string;
+  googleEnabled?: boolean;
+}) {
   const router = useRouter();
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
@@ -164,6 +171,8 @@ export function DashboardSignIn() {
       <p aria-live="polite" className="text-[13px] leading-relaxed text-ink-secondary">
         {message}
       </p>
+
+      {googleEnabled && <GoogleSignInButton next={next} />}
     </div>
   );
 }

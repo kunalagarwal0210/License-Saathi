@@ -16,6 +16,7 @@ export type FeatureFlag =
   | "FEATURE_SAVE_CHECKLIST" // Phone-OTP + save checklist (ticket 10)
   | "FEATURE_ADMIN" // Admin CRUD panel (ticket 09)
   | "FEATURE_FIELD_NOTES" // Community field-notes display (ticket 08)
+  | "FEATURE_GOOGLE_AUTH" // Google OAuth button beside email-OTP (ticket 04)
   | "FEATURE_REMINDERS" // Reminder email + field-note capture (14, 15)
   | "FEATURE_RESULTS_FROM_DB"; // Option A: read licences/rules from Supabase instead of the TS module
 

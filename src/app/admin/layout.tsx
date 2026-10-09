@@ -30,7 +30,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     return (
       <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-8 sm:px-6">
         <h1 className="font-signage text-xl font-bold text-ink">Admin sign-in</h1>
-        <DashboardSignIn />
+        <DashboardSignIn next="/admin" googleEnabled={isEnabled("FEATURE_GOOGLE_AUTH")} />
       </div>
     );
   }
