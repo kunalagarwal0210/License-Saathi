@@ -138,3 +138,13 @@ Add a real identity-and-authorisation gate to `/admin`, enforced on the server.
   OAuth redirect URL per environment; SQL-bootstrap the first admin.
 - Keep `FEATURE_ADMIN` default OFF in production until the admin and its auth are
   verified end to end.
+
+### Google OAuth go-live checklist (ticket 04)
+
+No secrets live in the repo. Do these in the dashboards before enabling:
+
+1. Google Cloud: create an OAuth 2.0 Web client. Authorised redirect URI is the Supabase callback `https://<project-ref>.supabase.co/auth/v1/callback`.
+2. Supabase > Auth > Providers > Google: enable, paste client ID and secret.
+3. Supabase > Auth > URL Configuration: add `<site-url>/auth/callback` per environment (production, preview, localhost) to Redirect URLs.
+4. Account linking: enable linking by verified email, so a Google sign-in joins an existing email-OTP user (the T02 trigger upserts the `users` row).
+5. The live Google round-trip was not tested in the build worktree. Test it on staging first.

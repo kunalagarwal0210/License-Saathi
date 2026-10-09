@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createSupabaseBrowserAuthClient } from "@/lib/supabase/browser-auth";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import { isValidEmail, isValidOtp } from "@/lib/checklist/saveChecklist";
 import { saveChecklist } from "@/app/results/[category]/actions";
 import type { Answers, BusinessCategory } from "@/lib/engine/types";
@@ -11,6 +12,7 @@ import { ANALYTICS_EVENTS, identifyUser, track } from "@/lib/analytics";
 type SaveChecklistProps = {
   category: BusinessCategory;
   answers: Answers;
+  googleEnabled?: boolean;
 };
 
 type Step = "idle" | "email" | "code" | "saving" | "done" | "error";
@@ -21,7 +23,7 @@ type Step = "idle" | "email" | "code" | "saving" | "done" | "error";
 // provider; see docs/tickets/10-otp-auth-save.md for the deviation) via
 // Supabase Auth, session landed in cookies by `browser-auth.ts` so the
 // `saveChecklist` server action (session-aware) can see the same user.
-export function SaveChecklist({ category, answers }: SaveChecklistProps) {
+export function SaveChecklist({ category, answers, googleEnabled = false }: SaveChecklistProps) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>("idle");
   const [email, setEmail] = useState("");
@@ -270,6 +272,10 @@ export function SaveChecklist({ category, answers }: SaveChecklistProps) {
       <p aria-live="polite" className="text-[13px] leading-relaxed text-ink-secondary">
         {step !== "done" ? message : ""}
       </p>
+
+      {googleEnabled && (step === "email" || step === "code" || step === "error") && (
+        <GoogleSignInButton next="/dashboard" />
+      )}
     </div>
   );
 }
